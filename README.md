@@ -91,6 +91,7 @@ Notas:
 ## Configuración de la base de datos
 
 Ejecuta el script completo `estructura_presentador_ia.sql` para crear todas las tablas, índices y triggers.
+Con una única ejecución tendrás todo el esquema listo en PostgreSQL (no requiere pasos manuales adicionales).
 
 ```bash
 psql -U <usuario> -d <base> -h <host> -p <puerto> -f estructura_presentador_ia.sql

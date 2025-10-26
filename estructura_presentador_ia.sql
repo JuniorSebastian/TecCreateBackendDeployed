@@ -1,15 +1,5 @@
--- ============================================
--- 🚀 BASE DE DATOS COMPLETA: PRESENTADOR_IA / TECCREATE
--- Script de inicialización para PostgreSQL
--- Ejecuta este script en tu base de datos para crear toda la estructura necesaria
--- Compatible con cualquier entorno PostgreSQL >= 12
--- ============================================
-
 BEGIN;
 
--- ============================================
--- 1️⃣ TABLA USUARIOS
--- ============================================
 CREATE TABLE IF NOT EXISTS usuarios (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
@@ -32,9 +22,6 @@ CREATE INDEX IF NOT EXISTS idx_usuarios_rol ON usuarios(rol);
 CREATE INDEX IF NOT EXISTS idx_usuarios_estado ON usuarios(estado);
 CREATE INDEX IF NOT EXISTS idx_usuarios_fecha_registro ON usuarios(fecha_registro DESC);
 
--- ============================================
--- 2️⃣ TABLA PRESENTACIONES
--- ============================================
 CREATE TABLE IF NOT EXISTS presentaciones (
     id SERIAL PRIMARY KEY,
     titulo VARCHAR(255) NOT NULL,
@@ -50,9 +37,6 @@ CREATE TABLE IF NOT EXISTS presentaciones (
 CREATE INDEX IF NOT EXISTS idx_presentaciones_email ON presentaciones(email);
 CREATE INDEX IF NOT EXISTS idx_presentaciones_email_fecha ON presentaciones(email, fecha_creacion DESC);
 
--- ============================================
--- 3️⃣ TABLA IMÁGENES ASOCIADAS A PRESENTACIONES
--- ============================================
 CREATE TABLE IF NOT EXISTS imagenes_presentacion (
     id SERIAL PRIMARY KEY,
     presentacion_id INTEGER NOT NULL REFERENCES presentaciones(id) ON DELETE CASCADE,
@@ -63,9 +47,6 @@ CREATE TABLE IF NOT EXISTS imagenes_presentacion (
 
 CREATE INDEX IF NOT EXISTS idx_imagenes_presentacion_id ON imagenes_presentacion(presentacion_id);
 
--- ============================================
--- 4️⃣ TABLA DE REPORTES DE SOPORTE
--- ============================================
 CREATE TABLE IF NOT EXISTS reportes_soporte (
     id SERIAL PRIMARY KEY,
     usuario_email VARCHAR(255) REFERENCES usuarios(email) ON DELETE SET NULL,
@@ -98,7 +79,6 @@ BEFORE UPDATE ON reportes_soporte
 FOR EACH ROW
 EXECUTE FUNCTION actualizar_fecha_reporte();
 
--- Soft-delete y métricas
 ALTER TABLE reportes_soporte
   ADD COLUMN IF NOT EXISTS eliminado BOOLEAN DEFAULT FALSE,
   ADD COLUMN IF NOT EXISTS eliminado_por VARCHAR(255) REFERENCES usuarios(email) ON DELETE SET NULL,
@@ -108,9 +88,6 @@ ALTER TABLE reportes_soporte
 CREATE INDEX IF NOT EXISTS idx_reportes_eliminado ON reportes_soporte(eliminado);
 CREATE INDEX IF NOT EXISTS idx_reportes_resuelto_en ON reportes_soporte(resuelto_en);
 
--- ============================================
--- 5️⃣ TABLA DE COMENTARIOS POR REPORTE
--- ============================================
 CREATE TABLE IF NOT EXISTS comentarios_reporte (
     id SERIAL PRIMARY KEY,
     reporte_id INTEGER NOT NULL REFERENCES reportes_soporte(id) ON DELETE CASCADE,
@@ -123,9 +100,6 @@ CREATE TABLE IF NOT EXISTS comentarios_reporte (
 CREATE INDEX IF NOT EXISTS idx_comentarios_reporte_id ON comentarios_reporte(reporte_id);
 CREATE INDEX IF NOT EXISTS idx_comentarios_autor ON comentarios_reporte(autor_email);
 
--- ============================================
--- 6️⃣ TABLA MODO MANTENIMIENTO
--- ============================================
 CREATE TABLE IF NOT EXISTS modo_mantenimiento (
     id SERIAL PRIMARY KEY,
     activo BOOLEAN DEFAULT FALSE,
@@ -136,9 +110,6 @@ CREATE TABLE IF NOT EXISTS modo_mantenimiento (
 
 CREATE INDEX IF NOT EXISTS idx_mantenimiento_fecha ON modo_mantenimiento(fecha_activacion DESC);
 
--- ============================================
--- 7️⃣ LOGS DEL SISTEMA
--- ============================================
 CREATE TABLE IF NOT EXISTS logs_sistema (
     id SERIAL PRIMARY KEY,
     tipo VARCHAR(50) NOT NULL,
@@ -151,9 +122,6 @@ CREATE TABLE IF NOT EXISTS logs_sistema (
 CREATE INDEX IF NOT EXISTS idx_logs_tipo_fecha ON logs_sistema(tipo, fecha DESC);
 CREATE INDEX IF NOT EXISTS idx_logs_origen ON logs_sistema(origen);
 
--- ============================================
--- 8️⃣ HISTORIAL DE ACCIONES DEL EQUIPO DE SOPORTE
--- ============================================
 CREATE TABLE IF NOT EXISTS historial_acciones_soporte (
     id SERIAL PRIMARY KEY,
     soporte_email VARCHAR(255) REFERENCES usuarios(email) ON DELETE SET NULL,
@@ -164,9 +132,6 @@ CREATE TABLE IF NOT EXISTS historial_acciones_soporte (
 
 CREATE INDEX IF NOT EXISTS idx_historial_soporte_fecha ON historial_acciones_soporte(soporte_email, fecha DESC);
 
--- ============================================
--- 9️⃣ NOTIFICACIONES PARA SOPORTE
--- ============================================
 CREATE TABLE IF NOT EXISTS notificaciones_soporte (
     id SERIAL PRIMARY KEY,
     tipo VARCHAR(50) NOT NULL,
@@ -179,12 +144,3 @@ CREATE INDEX IF NOT EXISTS idx_notificaciones_tipo ON notificaciones_soporte(tip
 CREATE INDEX IF NOT EXISTS idx_notificaciones_leido ON notificaciones_soporte(leido);
 
 COMMIT;
-
--- ============================================
--- ✅ FIN DE ESTRUCTURA COMPLETA
--- ============================================
--- Script listo para inicializar la base de datos de la app Presentador IA / TecCreate
--- Ejecuta este archivo en tu base PostgreSQL (por ejemplo, usando psql o PgAdmin)
---
--- Ejemplo de uso en consola:
---   psql -U tu_usuario -d tu_basededatos -f estructura_presentador_ia.sql
