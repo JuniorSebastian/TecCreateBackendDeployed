@@ -15,7 +15,18 @@ Este proyecto expone un backend en Node.js/Express con autenticación por Google
    - `ADMIN_EMAILS`, `PUBLIC_BASE_URL`, `ALLOWED_ORIGINS` según tu configuración.
 4. Render generará automáticamente `SESSION_SECRET` y `JWT_SECRET`. Puedes regenerarlas desde el dashboard cuando lo necesites.
 5. Verifica el health check visitando `https://<tu-servicio>.onrender.com/healthz`. Debe responder con `{ "status": "ok" }`.
-6. Si usas dominios personalizados, actualiza `PUBLIC_BASE_URL` y agrega la URL a `ALLOWED_ORIGINS` para que CORS acepte el nuevo dominio.
+ 6. Si usas dominios personalizados, actualiza `PUBLIC_BASE_URL` y agrega la URL a `ALLOWED_ORIGINS` para que CORS acepte el nuevo dominio.
+
+## Manual de usuario completo
+
+Consulta la guía integral en `docs/Backend-Manual.md`, que cubre:
+- Variables de entorno y configuración por entorno
+- Esquema de base de datos y script `estructura_presentador_ia.sql`
+- Despliegue en Render y on‑premise
+- OAuth (Google), CORS y sesiones
+- Endpoints por módulo (auth, presentaciones, admin, reportes, soporte)
+- IA (Groq/Gemini) y exportación a PPTX
+- Seguridad y solución de problemas
 
 ## Requisitos previos
 
