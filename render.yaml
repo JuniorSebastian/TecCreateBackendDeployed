@@ -1,0 +1,52 @@
+services:
+  - type: web
+    name: presentador-ia-backend
+    env: node
+    plan: free
+    branch: main
+    rootDir: .
+    buildCommand: npm install
+    startCommand: npm run start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: presentador-ia-db
+          property: connectionString
+      - key: DATABASE_SSL
+        value: "true"
+      - key: CLIENT_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: PUBLIC_BASE_URL
+        value: https://presentador-ia-backend.onrender.com
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: SESSION_MAX_AGE
+        sync: false
+      - key: MAINTENANCE_GATE_SECRET
+        sync: false
+      - key: SUPPORT_EMAIL
+        sync: false
+
+databases:
+  - name: presentador-ia-db
+    plan: free

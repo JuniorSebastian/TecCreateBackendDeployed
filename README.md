@@ -2,6 +2,21 @@
 
 Este proyecto expone un backend en Node.js/Express con autenticación por Google OAuth y conexión a una base de datos PostgreSQL local.
 
+## Despliegue en Render
+
+1. Asegúrate de haber subido el repositorio con el archivo `render.yaml` incluido en la raíz del backend.
+2. En Render crea un Blueprint (Deploy > New Blueprint) apuntando al repositorio. Render detectará `render.yaml` y provisionará:
+   - Un servicio web Node (`presentador-ia-backend`) con `npm run start`.
+   - Una base de datos PostgreSQL gratuita (`presentador-ia-db`).
+3. Completa las variables de entorno sensibles desde el panel de Render (menú **Environment**). Las claves marcadas con `sync: false` en `render.yaml` deben definirse manualmente:
+   - `CLIENT_URL`: URL del frontend permitido por CORS.
+   - `GROQ_API_KEY`, `GEMINI_API_KEY` si necesitas IA.
+   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` para OAuth.
+   - `ADMIN_EMAILS`, `PUBLIC_BASE_URL`, `ALLOWED_ORIGINS` según tu configuración.
+4. Render generará automáticamente `SESSION_SECRET` y `JWT_SECRET`. Puedes regenerarlas desde el dashboard cuando lo necesites.
+5. Verifica el health check visitando `https://<tu-servicio>.onrender.com/healthz`. Debe responder con `{ "status": "ok" }`.
+6. Si usas dominios personalizados, actualiza `PUBLIC_BASE_URL` y agrega la URL a `ALLOWED_ORIGINS` para que CORS acepte el nuevo dominio.
+
 ## Requisitos previos
 
 - Node.js 18 o superior
