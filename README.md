@@ -28,6 +28,8 @@ Consulta la guía integral en `docs/Backend-Manual.md`, que cubre:
 - IA (Groq/Gemini) y exportación a PPTX
 - Seguridad y solución de problemas
 
+Además, para un enfoque operativo orientado a usuarios y administradores, revisa `docs/Manual-Usuario-Backend.md` (funcionalidades, pasos y llamadas de API mapeadas a cada acción del sistema).
+
 ## Requisitos previos
 
 - Node.js 18 o superior
