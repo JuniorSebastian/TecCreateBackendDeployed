@@ -80,6 +80,7 @@ GOOGLE_CALLBACK_URL=https://<tu-backend>/auth/google/callback
 
 GROQ_API_KEY=<opcional>
 GEMINI_API_KEY=<opcional>
+GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
 MAINTENANCE_GATE_SECRET=<opcional>
 SUPPORT_EMAIL=soporte@tu-dominio.com
 ```
@@ -87,6 +88,7 @@ SUPPORT_EMAIL=soporte@tu-dominio.com
 Notas:
 - Ajusta `PGPOOL_MAX` según el límite de conexiones de tu Postgres (planes pequeños: 2–5).
 - `ALLOWED_ORIGINS` controla qué dominios pueden consumir el backend.
+- Todos los secretos (JWT, sesión, OAuth, Groq, Gemini) deben generarse en tus propias cuentas; no compartas ni subas los valores reales al repositorio.
 
 ## Configuración de la base de datos
 
@@ -271,6 +273,7 @@ Para detalles completos revisa los controladores en `controllers/` o el manual t
 
 - Groq (`GROQ_API_KEY`) genera el contenido textual de las slides.
 - Gemini (`GEMINI_API_KEY`) crea imágenes temáticas opcionales.
+- `GEMINI_IMAGE_MODEL` controla el modelo usado para imágenes (por defecto `gemini-2.0-flash-preview-image-generation`; cambia el valor si tu cuenta tiene otro modelo habilitado).
 - `pptxgenjs` arma el PPTX usando plantillas (`utils/pptThemes.js`) y fuentes (`utils/pptFonts.js`).
 - Si no hay claves IA, el backend funciona con degradación (esquemas básicos o placeholders).
 
