@@ -10,13 +10,9 @@ const {
   normalizeImageForPpt,
 } = require('../utils/pptImages');
 
-const DEFAULT_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
-const FALLBACK_IMAGE_MODELS = [
-  'gemini-2.5-flash-preview-image',
-  'gemini-2.0-flash-preview-image',
-  'imagen-3.0-generate',
-  'gemini-2.0-flash-lite',
-];
+const DEFAULT_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || null;
+const FALLBACK_IMAGE_MODELS = [];
+const IMAGE_GENERATION_ENABLED = Boolean(DEFAULT_IMAGE_MODEL && process.env.GEMINI_API_KEY);
 const REQUEST_TIMEOUT_MS = Number.parseInt(process.env.GEMINI_IMAGE_TIMEOUT_MS || '20000', 10);
 const REQUEST_DELAY_MS = Number.parseInt(process.env.GEMINI_IMAGE_DELAY_MS || '400', 10);
 const MAX_SLIDES_WITH_IMAGES = Number.parseInt(process.env.GEMINI_IMAGE_MAX_SLIDES || '25', 10);
@@ -515,6 +511,14 @@ const generateValidatedImage = async (args) => {
 const generateImagesForSlides = async (slides, context = {}) => {
   if (!Array.isArray(slides) || !slides.length) {
     return [];
+  }
+
+  if (!IMAGE_GENERATION_ENABLED) {
+    console.log('ℹ️ Generación de imágenes deshabilitada (falta GEMINI_IMAGE_MODEL o GEMINI_API_KEY).');
+    return slides.map((_, idx) => ({
+      numeroSlide: idx + 1,
+      error: 'Generación de imágenes deshabilitada. Configura GEMINI_IMAGE_MODEL con un modelo disponible.',
+    }));
   }
 
   const limitedSlides = slides.slice(0, MAX_SLIDES_WITH_IMAGES);
