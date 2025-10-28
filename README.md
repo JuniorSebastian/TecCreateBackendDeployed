@@ -274,7 +274,7 @@ Para detalles completos revisa los controladores en `controllers/` o el manual t
 - Groq (`GROQ_API_KEY`) genera el contenido textual de las slides.
 - Gemini (`GEMINI_API_KEY`) crea imágenes temáticas opcionales.
 - `GEMINI_IMAGE_MODEL` controla el modelo usado para imágenes (por defecto `gemini-2.5-flash-image`; cambia el valor si tu cuenta tiene otro modelo habilitado).
-- Si el modelo principal devuelve errores de cuota o rate limit (`429`), el backend intenta automáticamente un modelo de respaldo (`gemini-2.0-flash-lite`). Registra tu cuota en https://ai.dev/usage o ajusta `GEMINI_IMAGE_MODEL` si tu plan no habilita el modelo por defecto.
+- Si el modelo principal devuelve errores de cuota o rate limit (`429`/`403`), el backend intenta automáticamente una cadena de respaldos: `gemini-2.5-flash-preview-image`, `gemini-2.0-flash-preview-image` (gratuito) y `imagen-3.0-generate`, antes de caer en `gemini-2.0-flash-lite`. Consulta tu cuota en https://ai.dev/usage o cambia `GEMINI_IMAGE_MODEL` según la disponibilidad anual de tu cuenta.
 - `pptxgenjs` arma el PPTX usando plantillas (`utils/pptThemes.js`) y fuentes (`utils/pptFonts.js`).
 - Si no hay claves IA, el backend funciona con degradación (esquemas básicos o placeholders).
 

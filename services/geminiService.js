@@ -11,7 +11,12 @@ const {
 } = require('../utils/pptImages');
 
 const DEFAULT_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
-const FALLBACK_IMAGE_MODEL = 'gemini-2.0-flash-lite';
+const FALLBACK_IMAGE_MODELS = [
+  'gemini-2.5-flash-preview-image',
+  'gemini-2.0-flash-preview-image',
+  'imagen-3.0-generate',
+  'gemini-2.0-flash-lite',
+];
 const REQUEST_TIMEOUT_MS = Number.parseInt(process.env.GEMINI_IMAGE_TIMEOUT_MS || '20000', 10);
 const REQUEST_DELAY_MS = Number.parseInt(process.env.GEMINI_IMAGE_DELAY_MS || '400', 10);
 const MAX_SLIDES_WITH_IMAGES = Number.parseInt(process.env.GEMINI_IMAGE_MAX_SLIDES || '25', 10);
@@ -413,7 +418,10 @@ const validateImageHasNoText = async ({ buffer, mimeType }) => {
 const callGeminiImage = async ({ prompt, slideIndex, presentationId, slideTitle, runId }) => {
   const apiKey = ensureApiKey();
   const primaryModel = DEFAULT_IMAGE_MODEL;
-  const fallbackModel = FALLBACK_IMAGE_MODEL;
+  const modelsToTry = [
+    primaryModel,
+    ...FALLBACK_IMAGE_MODELS.filter((model) => model && model !== primaryModel),
+  ];
 
   const attempt = async (model) => {
     const result = await requestImageFromModel({ model, prompt, apiKey });
@@ -421,40 +429,43 @@ const callGeminiImage = async ({ prompt, slideIndex, presentationId, slideTitle,
     return { buffer, mimeType, dataUri: result.dataUri, raw: result.raw, model };
   };
 
-  try {
-    const primary = await attempt(primaryModel);
-    console.log(`✅ Imagen generada con ${primary.model} para la diapositiva ${slideIndex}`);
-    return primary;
-  } catch (primaryError) {
-    console.warn(`⚠️ Falló ${primaryModel} en la diapositiva ${slideIndex}: ${primaryError.message}`);
-    const shouldRetry =
-      [400, 403, 404, 409, 422, 429].includes(primaryError.status) ||
-      /model not found/i.test(primaryError.message || '') ||
-      /unsupported/i.test(primaryError.message || '') ||
-      /quota/i.test(primaryError.message || '') ||
-      /rate limit/i.test(primaryError.message || '');
+  const errors = [];
 
-    if (!shouldRetry || primaryModel === fallbackModel) {
-      throw primaryError;
-    }
-
-    console.warn(`🔁 Reintentando con modelo de respaldo ${fallbackModel}`);
-
+  for (const model of modelsToTry) {
     try {
-      const fallback = await attempt(fallbackModel);
-      console.log(`✅ Imagen generada con ${fallback.model} para la diapositiva ${slideIndex}`);
-      return fallback;
-    } catch (fallbackError) {
-      console.warn(`⚠️ También falló ${fallbackModel} en la diapositiva ${slideIndex}: ${fallbackError.message}`);
-      // Si ambos modelos fallan por cuota, propaga un error claro para manejar degradación aguas arriba.
-      if ([429, 403].includes(fallbackError.status) || /quota/i.test(fallbackError.message || '')) {
-        const error = new Error('Gemini alcanzó el límite de cuota para generar imágenes. Revisa tu plan o asigna otro modelo disponible.');
-        error.status = fallbackError.status || primaryError.status;
+      const result = await attempt(model);
+      console.log(`✅ Imagen generada con ${result.model} para la diapositiva ${slideIndex}`);
+      return result;
+    } catch (error) {
+      const status = error.status || error?.body?.error?.code;
+      const message = error.message || '';
+      errors.push({ model, status, message });
+      console.warn(`⚠️ Falló ${model} en la diapositiva ${slideIndex}: ${message}`);
+
+      const retryableStatus = [400, 403, 404, 409, 422, 429, 500, 502, 503];
+      const retryableMessage = /quota|rate limit|temporarily unavailable|try again/i.test(message);
+
+      if (!retryableStatus.includes(status) && !retryableMessage) {
         throw error;
       }
-      throw fallbackError;
+
+      console.warn('🔁 Intentando con el siguiente modelo de respaldo disponible...');
     }
   }
+
+  const quotaErrors = errors.filter((item) => [403, 429].includes(item.status) || /quota|rate limit/i.test(item.message || ''));
+  if (quotaErrors.length === errors.length && quotaErrors.length > 0) {
+    const error = new Error('Todos los modelos configurados alcanzaron el límite de cuota para generar imágenes. Activa billing o usa una cuenta con cupo disponible.');
+    error.status = quotaErrors[0].status || 429;
+    error.details = { attempts: errors };
+    throw error;
+  }
+
+  const lastError = errors[errors.length - 1];
+  const fallbackError = new Error(lastError?.message || 'Gemini no pudo generar la imagen');
+  fallbackError.status = lastError?.status;
+  fallbackError.details = { attempts: errors };
+  throw fallbackError;
 };
 
 const generateValidatedImage = async (args) => {
