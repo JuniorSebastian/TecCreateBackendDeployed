@@ -428,16 +428,32 @@ const callGeminiImage = async ({ prompt, slideIndex, presentationId, slideTitle,
   } catch (primaryError) {
     console.warn(`⚠️ Falló ${primaryModel} en la diapositiva ${slideIndex}: ${primaryError.message}`);
     const shouldRetry =
-      [400, 404].includes(primaryError.status) ||
+      [400, 403, 404, 409, 422, 429].includes(primaryError.status) ||
       /model not found/i.test(primaryError.message || '') ||
-      /unsupported/i.test(primaryError.message || '');
+      /unsupported/i.test(primaryError.message || '') ||
+      /quota/i.test(primaryError.message || '') ||
+      /rate limit/i.test(primaryError.message || '');
+
     if (!shouldRetry || primaryModel === fallbackModel) {
       throw primaryError;
     }
+
     console.warn(`🔁 Reintentando con modelo de respaldo ${fallbackModel}`);
-    const fallback = await attempt(fallbackModel);
-    console.log(`✅ Imagen generada con ${fallback.model} para la diapositiva ${slideIndex}`);
-    return fallback;
+
+    try {
+      const fallback = await attempt(fallbackModel);
+      console.log(`✅ Imagen generada con ${fallback.model} para la diapositiva ${slideIndex}`);
+      return fallback;
+    } catch (fallbackError) {
+      console.warn(`⚠️ También falló ${fallbackModel} en la diapositiva ${slideIndex}: ${fallbackError.message}`);
+      // Si ambos modelos fallan por cuota, propaga un error claro para manejar degradación aguas arriba.
+      if ([429, 403].includes(fallbackError.status) || /quota/i.test(fallbackError.message || '')) {
+        const error = new Error('Gemini alcanzó el límite de cuota para generar imágenes. Revisa tu plan o asigna otro modelo disponible.');
+        error.status = fallbackError.status || primaryError.status;
+        throw error;
+      }
+      throw fallbackError;
+    }
   }
 };
 
