@@ -80,7 +80,7 @@ GOOGLE_CALLBACK_URL=https://<tu-backend>/auth/google/callback
 
 GROQ_API_KEY=<opcional>
 GEMINI_API_KEY=<opcional>
-GEMINI_IMAGE_MODEL=<opcional-deja-vacio-si-no-tienes-modelo>
+GEMINI_IMAGE_MODEL=gemini-2.5-flash-image
 MAINTENANCE_GATE_SECRET=<opcional>
 SUPPORT_EMAIL=soporte@tu-dominio.com
 ```
@@ -272,8 +272,8 @@ Para detalles completos revisa los controladores en `controllers/` o el manual t
 ## IA y generación de PPTX
 
 - Groq (`GROQ_API_KEY`) genera el contenido textual de las slides.
-- Gemini (`GEMINI_API_KEY` + `GEMINI_IMAGE_MODEL`) crea imágenes temáticas opcionales. **Si no tienes un modelo disponible con cuota, deja `GEMINI_IMAGE_MODEL` vacío y las presentaciones se generarán sin imágenes**.
-- Modelos recomendados (si tu proyecto tiene cuota disponible): `gemini-2.5-flash-image`, `gemini-exp-1206` (experimental). Verifica disponibilidad en https://ai.google.dev/gemini-api/docs/models/gemini#imagen.
+- Gemini (`GEMINI_API_KEY` + `GEMINI_IMAGE_MODEL`) crea imágenes temáticas opcionales usando el modelo `gemini-2.5-flash-image` (disponible en el Free Tier de Google AI Studio).
+- El modelo por defecto es `gemini-2.5-flash-image`, que reemplaza a `gemini-2.0-flash-preview-image-generation` (discontinuado el 12 de noviembre de 2025). Consulta límites de uso gratuito en https://ai.google.dev/pricing.
 - `pptxgenjs` arma el PPTX usando plantillas (`utils/pptThemes.js`) y fuentes (`utils/pptFonts.js`).
 - Si no hay claves IA o el modelo no está disponible, el backend funciona con degradación (esquemas básicos sin imágenes).
 
