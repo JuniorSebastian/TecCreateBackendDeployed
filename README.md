@@ -80,15 +80,16 @@ GOOGLE_CALLBACK_URL=https://<tu-backend>/auth/google/callback
 
 GROQ_API_KEY=<opcional>
 GEMINI_API_KEY=<opcional>
-GEMINI_IMAGE_MODEL=gemini-2.5-flash-image
+GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image
 MAINTENANCE_GATE_SECRET=<opcional>
 SUPPORT_EMAIL=soporte@tu-dominio.com
 ```
 
-Notas:
+**Notas importantes:**
 - Ajusta `PGPOOL_MAX` según el límite de conexiones de tu Postgres (planes pequeños: 2–5).
 - `ALLOWED_ORIGINS` controla qué dominios pueden consumir el backend.
-- Todos los secretos (JWT, sesión, OAuth, Groq, Gemini) deben generarse en tus propias cuentas; no compartas ni subas los valores reales al repositorio.
+- `GEMINI_IMAGE_MODEL` usa `gemini-2.0-flash-preview-image` (modelo preview funcional para generación de imágenes).
+- Todos los secretos (JWT, sesión, OAuth, Groq, Gemini) deben generarse en tus propias cuentas; **nunca compartas ni subas los valores reales al repositorio**.
 
 ## Configuración de la base de datos
 
@@ -271,11 +272,12 @@ Para detalles completos revisa los controladores en `controllers/` o el manual t
 
 ## IA y generación de PPTX
 
-- Groq (`GROQ_API_KEY`) genera el contenido textual de las slides.
-- Gemini (`GEMINI_API_KEY` + `GEMINI_IMAGE_MODEL`) crea imágenes temáticas opcionales usando el modelo `gemini-2.5-flash-image` (disponible en el Free Tier de Google AI Studio).
-- El modelo por defecto es `gemini-2.5-flash-image`, que reemplaza a `gemini-2.0-flash-preview-image-generation` (discontinuado el 12 de noviembre de 2025). Consulta límites de uso gratuito en https://ai.google.dev/pricing.
-- `pptxgenjs` arma el PPTX usando plantillas (`utils/pptThemes.js`) y fuentes (`utils/pptFonts.js`).
-- Si no hay claves IA o el modelo no está disponible, el backend funciona con degradación (esquemas básicos sin imágenes).
+- **Groq** (`GROQ_API_KEY`): genera el contenido textual de las slides con modelos como `llama3-70b-8192`.
+- **Gemini** (`GEMINI_API_KEY` + `GEMINI_IMAGE_MODEL`): crea imágenes temáticas opcionales para cada diapositiva.
+  - **Modelo por defecto**: `gemini-2.0-flash-preview-image` (modelo preview funcional para generación de imágenes).
+  - Puedes configurar otro modelo mediante la variable `GEMINI_IMAGE_MODEL`.
+- **pptxgenjs**: arma el archivo PPTX usando plantillas temáticas (`utils/pptThemes.js`) y fuentes personalizadas (`utils/pptFonts.js`).
+- **Degradación elegante**: si no hay claves configuradas o el modelo no está disponible, el backend funciona sin imágenes generadas (se crean esquemas básicos con texto únicamente).
 
 ## Soporte y mantenimiento
 
