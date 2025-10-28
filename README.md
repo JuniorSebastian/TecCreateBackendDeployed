@@ -80,7 +80,7 @@ GOOGLE_CALLBACK_URL=https://<tu-backend>/auth/google/callback
 
 GROQ_API_KEY=<opcional>
 GEMINI_API_KEY=<opcional>
-GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
+GEMINI_IMAGE_MODEL=gemini-2.5-flash-image
 MAINTENANCE_GATE_SECRET=<opcional>
 SUPPORT_EMAIL=soporte@tu-dominio.com
 ```
@@ -273,7 +273,7 @@ Para detalles completos revisa los controladores en `controllers/` o el manual t
 
 - Groq (`GROQ_API_KEY`) genera el contenido textual de las slides.
 - Gemini (`GEMINI_API_KEY`) crea imágenes temáticas opcionales.
-- `GEMINI_IMAGE_MODEL` controla el modelo usado para imágenes (por defecto `gemini-2.0-flash-preview-image-generation`; cambia el valor si tu cuenta tiene otro modelo habilitado).
+- `GEMINI_IMAGE_MODEL` controla el modelo usado para imágenes (por defecto `gemini-2.5-flash-image`; cambia el valor si tu cuenta tiene otro modelo habilitado).
 - `pptxgenjs` arma el PPTX usando plantillas (`utils/pptThemes.js`) y fuentes (`utils/pptFonts.js`).
 - Si no hay claves IA, el backend funciona con degradación (esquemas básicos o placeholders).
 

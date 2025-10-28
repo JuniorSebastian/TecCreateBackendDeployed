@@ -10,7 +10,7 @@ const {
   normalizeImageForPpt,
 } = require('../utils/pptImages');
 
-const DEFAULT_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || 'imagen-3.0-generate';
+const DEFAULT_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
 const FALLBACK_IMAGE_MODEL = 'gemini-2.0-flash-lite';
 const REQUEST_TIMEOUT_MS = Number.parseInt(process.env.GEMINI_IMAGE_TIMEOUT_MS || '20000', 10);
 const REQUEST_DELAY_MS = Number.parseInt(process.env.GEMINI_IMAGE_DELAY_MS || '400', 10);
