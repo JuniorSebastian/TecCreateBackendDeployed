@@ -11,7 +11,7 @@ const {
 } = require('../utils/pptImages');
 
 const DEFAULT_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.0-flash-preview-image-generation';
-const FALLBACK_IMAGE_MODELS = ['gemini-2.5-flash-preview-image', 'imagen-3.0-generate'];
+const FALLBACK_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL_FALLBACK || 'gemini-2.5-flash-image';
 const IMAGE_GENERATION_ENABLED = Boolean(DEFAULT_IMAGE_MODEL && process.env.GEMINI_API_KEY);
 const REQUEST_TIMEOUT_MS = Number.parseInt(process.env.GEMINI_IMAGE_TIMEOUT_MS || '20000', 10);
 const REQUEST_DELAY_MS = Number.parseInt(process.env.GEMINI_IMAGE_DELAY_MS || '400', 10);
@@ -287,13 +287,21 @@ const requestImageFromModel = async ({
       error.body = payloadText;
       throw error;
     }
-    const inlineDataPart = payload?.candidates?.[0]?.content?.parts?.find((part) => part?.inlineData?.data);
-    if (!inlineDataPart) {
-      throw new Error('Gemini no devolvió datos de imagen utilizables');
+
+    // Buscar imagen en candidates[].content.parts[].inlineData.data
+    const candidates = payload?.candidates || [];
+    for (const candidate of candidates) {
+      const parts = candidate?.content?.parts || [];
+      for (const part of parts) {
+        if (part?.inlineData?.data) {
+          const mimeType = part.inlineData.mimeType || 'image/png';
+          const dataUri = `data:${mimeType};base64,${part.inlineData.data}`;
+          return { dataUri, mimeType, raw: payload };
+        }
+      }
     }
-    const mimeType = inlineDataPart.inlineData.mimeType || 'image/png';
-    const dataUri = `data:${mimeType};base64,${inlineDataPart.inlineData.data}`;
-    return { dataUri, mimeType, raw: payload };
+
+    throw new Error('Gemini no devolvió datos de imagen utilizables');
   } finally {
     if (timer) {
       clearTimeout(timer);
@@ -414,52 +422,68 @@ const validateImageHasNoText = async ({ buffer, mimeType }) => {
 const callGeminiImage = async ({ prompt, slideIndex, presentationId, slideTitle, runId }) => {
   const apiKey = ensureApiKey();
   const primaryModel = DEFAULT_IMAGE_MODEL;
-  const modelsToTry = [
-    primaryModel,
-    ...FALLBACK_IMAGE_MODELS.filter((model) => model && model !== primaryModel),
-  ];
+  const fallbackModel = FALLBACK_IMAGE_MODEL;
 
-  const attempt = async (model) => {
-    const result = await requestImageFromModel({ model, prompt, apiKey });
-    const { buffer, mimeType } = dataUriToBuffer(result.dataUri);
-    return { buffer, mimeType, dataUri: result.dataUri, raw: result.raw, model };
+  // Lista de modelos a intentar: primero el principal, luego el fallback
+  const modelsToTry = [primaryModel];
+  if (fallbackModel && fallbackModel !== primaryModel) {
+    modelsToTry.push(fallbackModel);
+  }
+
+  const shouldRetry = (error) => {
+    const status = error.status;
+    const message = (error.message || '').toLowerCase();
+    const body = (error.body || '').toLowerCase();
+
+    // Errores que indican que el modelo no funciona y debemos intentar con fallback
+    const retryableStatuses = [400, 403, 404];
+    if (retryableStatuses.includes(status)) {
+      return true;
+    }
+
+    // Mensajes que indican que el modelo no está disponible
+    const retryableKeywords = ['not found', 'unsupported', 'deprecated', 'does not support'];
+    return retryableKeywords.some(keyword => message.includes(keyword) || body.includes(keyword));
   };
 
   const errors = [];
 
   for (const model of modelsToTry) {
     try {
-      const result = await attempt(model);
-      console.log(`✅ Imagen generada con ${result.model} para la diapositiva ${slideIndex}`);
-      return result;
+      console.log(`🔄 Intentando generar imagen con ${model} para la diapositiva ${slideIndex}...`);
+      const result = await requestImageFromModel({ model, prompt, apiKey });
+      const { buffer, mimeType } = dataUriToBuffer(result.dataUri);
+      console.log(`✅ Imagen generada exitosamente con ${model} para la diapositiva ${slideIndex}`);
+      return { buffer, mimeType, dataUri: result.dataUri, raw: result.raw, model };
     } catch (error) {
       const status = error.status || error?.body?.error?.code;
       const message = error.message || '';
       errors.push({ model, status, message });
+      
       console.warn(`⚠️ Falló ${model} en la diapositiva ${slideIndex}: ${message}`);
 
-      const retryableStatus = [400, 403, 404, 409, 422, 429, 500, 502, 503];
-      const retryableMessage = /quota|rate limit|temporarily unavailable|try again/i.test(message);
-
-      if (!retryableStatus.includes(status) && !retryableMessage) {
-        throw error;
+      // Si es el último modelo, lanzar el error
+      if (model === modelsToTry[modelsToTry.length - 1]) {
+        break;
       }
 
-      console.warn('🔁 Intentando con el siguiente modelo de respaldo disponible...');
+      // Si el error es retryable, intentar con el siguiente modelo
+      if (shouldRetry(error)) {
+        console.log(`🔁 Cambiando automáticamente al modelo de respaldo...`);
+        continue;
+      }
+
+      // Si el error no es retryable, lanzarlo inmediatamente
+      throw error;
     }
   }
 
-  const quotaErrors = errors.filter((item) => [403, 429].includes(item.status) || /quota|rate limit/i.test(item.message || ''));
-  if (quotaErrors.length === errors.length && quotaErrors.length > 0) {
-    const error = new Error('Todos los modelos configurados alcanzaron el límite de cuota para generar imágenes. Activa billing o usa una cuenta con cupo disponible.');
-    error.status = quotaErrors[0].status || 429;
-    error.details = { attempts: errors };
-    throw error;
-  }
-
+  // Si llegamos aquí, todos los modelos fallaron
   const lastError = errors[errors.length - 1];
-  const fallbackError = new Error(lastError?.message || 'Gemini no pudo generar la imagen');
-  fallbackError.status = lastError?.status;
+  const fallbackError = new Error(
+    `No se pudo generar imagen con ninguno de los modelos configurados. Último error: ${lastError?.message || 'Error desconocido'}`
+  );
+  fallbackError.status = lastError?.status || 500;
   fallbackError.details = { attempts: errors };
   throw fallbackError;
 };

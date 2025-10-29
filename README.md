@@ -81,6 +81,7 @@ GOOGLE_CALLBACK_URL=https://<tu-backend>/auth/google/callback
 GROQ_API_KEY=<opcional>
 GEMINI_API_KEY=<opcional>
 GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
+GEMINI_IMAGE_MODEL_FALLBACK=gemini-2.5-flash-image
 MAINTENANCE_GATE_SECRET=<opcional>
 SUPPORT_EMAIL=soporte@tu-dominio.com
 ```
@@ -88,7 +89,8 @@ SUPPORT_EMAIL=soporte@tu-dominio.com
 **Notas importantes:**
 - Ajusta `PGPOOL_MAX` según el límite de conexiones de tu Postgres (planes pequeños: 2–5).
 - `ALLOWED_ORIGINS` controla qué dominios pueden consumir el backend.
-- `GEMINI_IMAGE_MODEL` usa `gemini-2.0-flash-preview-image-generation` con límites de **1K RPM, 1M TPM, 10K RPD** (nivel de pago 1). Tiene modelos de respaldo: `gemini-2.5-flash-preview-image` e `imagen-3.0-generate`.
+- `GEMINI_IMAGE_MODEL` define el modelo principal para generar imágenes (por defecto: `gemini-2.0-flash-preview-image-generation` con límites de **1K RPM, 1M TPM, 10K RPD**).
+- `GEMINI_IMAGE_MODEL_FALLBACK` define el modelo de respaldo que se usa automáticamente si el principal falla (por defecto: `gemini-2.5-flash-image`). El sistema cambia automáticamente al fallback si detecta errores 400, 403, 404 o mensajes "not found", "unsupported", "deprecated".
 - Todos los secretos (JWT, sesión, OAuth, Groq, Gemini) deben generarse en tus propias cuentas; **nunca compartas ni subas los valores reales al repositorio**.
 
 ## Configuración de la base de datos
@@ -273,12 +275,18 @@ Para detalles completos revisa los controladores en `controllers/` o el manual t
 ## IA y generación de PPTX
 
 - **Groq** (`GROQ_API_KEY`): genera el contenido textual de las slides con modelos como `llama3-70b-8192`.
-- **Gemini** (`GEMINI_API_KEY` + `GEMINI_IMAGE_MODEL`): crea imágenes temáticas opcionales para cada diapositiva.
-  - **Modelo principal**: `gemini-2.0-flash-preview-image-generation` (Multi-modal generative model)
-    - **Límites (Nivel de pago 1)**: 1,000 RPM | 1M TPM | 10,000 RPD
-  - **Modelos de respaldo**: `gemini-2.5-flash-preview-image` (500 RPM) e `imagen-3.0-generate` (20 RPM)
-  - **Sistema de fallback**: Si el modelo principal falla, automáticamente intenta con los modelos de respaldo disponibles
-  - Puedes configurar manualmente otro modelo mediante la variable `GEMINI_IMAGE_MODEL`
+- **Gemini** (`GEMINI_API_KEY` + `GEMINI_IMAGE_MODEL` + `GEMINI_IMAGE_MODEL_FALLBACK`): crea imágenes temáticas opcionales para cada diapositiva.
+  - **Modelo principal**: configurado en `GEMINI_IMAGE_MODEL` (por defecto: `gemini-2.0-flash-preview-image-generation`)
+    - **Límites**: 1,000 RPM | 1M TPM | 10,000 RPD (nivel de pago 1)
+  - **Modelo de respaldo**: configurado en `GEMINI_IMAGE_MODEL_FALLBACK` (por defecto: `gemini-2.5-flash-image`)
+    - Se activa automáticamente si el modelo principal falla
+  - **Sistema de fallback automático**: 
+    - Detecta errores 400, 403, 404 y mensajes como "not found", "unsupported", "deprecated"
+    - Cambia automáticamente al modelo de respaldo sin intervención manual
+    - Si ambos modelos fallan, devuelve un error descriptivo
+  - **Endpoint**: usa `:generateContent` (no `:generateImage`)
+  - **Request body**: incluye `responseModalities: ['TEXT', 'IMAGE']`
+  - **Response**: imagen en `candidates[].content.parts[].inlineData.data`
 - **pptxgenjs**: arma el archivo PPTX usando plantillas temáticas (`utils/pptThemes.js`) y fuentes personalizadas (`utils/pptFonts.js`).
 - **Degradación elegante**: si no hay claves configuradas o ningún modelo está disponible, el backend funciona sin imágenes generadas (se crean esquemas básicos con texto únicamente).
 
