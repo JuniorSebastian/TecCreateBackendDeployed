@@ -179,6 +179,31 @@ const enforceSlideCount = (slides, presentacion) => {
 const buildPrompt = (presentacion) => {
   const tema = presentacion.titulo || 'Presentación profesional';
   const slideCount = resolveDesiredSlideCount(presentacion);
+  const detailLevel = presentacion.detailLevel || presentacion.nivel || 'Medium';
+
+  // Configuración basada en nivel de detalle
+  const detailConfig = {
+    Brief: {
+      bulletCount: 3,
+      bulletWordRange: '8-12',
+      contentSentences: 2,
+      description: 'conciso y directo',
+    },
+    Medium: {
+      bulletCount: 4,
+      bulletWordRange: '10-18',
+      contentSentences: 3,
+      description: 'equilibrado y profesional',
+    },
+    Detailed: {
+      bulletCount: 5,
+      bulletWordRange: '15-25',
+      contentSentences: 4,
+      description: 'exhaustivo y profundo',
+    },
+  };
+
+  const config = detailConfig[detailLevel] || detailConfig.Medium;
 
   return `Genera una lista de diapositivas sobre el siguiente tema en formato JSON válido y altamente informativo.
 
@@ -187,7 +212,7 @@ Estructura exacta:
   "slides": [
     {
       "titulo": "string",
-      "bullets": ["string", "string", "string", "string"],
+      "bullets": ["string", "string", "string"],
       "contenido": "string"
     }
   ]
@@ -198,8 +223,9 @@ Instrucciones estrictas:
 - No agregues comentarios, encabezados ni texto fuera del JSON solicitado.
 - Usa comillas dobles y asegura que el JSON sea válido.
 - Cada "titulo" debe ser breve (máximo 8 palabras) y descriptivo.
-- Cada lista "bullets" debe tener exactamente 4 entradas entre 10 y 18 palabras, incluir datos concretos, beneficios medibles o pasos accionables, iniciar con verbos distintos y evitar conectores genéricos.
-- El campo "contenido" debe contener un párrafo de 3 oraciones que resuma el contexto, profundice en los bullets e incluya un ejemplo específico.
+- Cada lista "bullets" debe tener exactamente ${config.bulletCount} entradas entre ${config.bulletWordRange} palabras, incluir datos concretos, beneficios medibles o pasos accionables, iniciar con verbos distintos y evitar conectores genéricos.
+- El campo "contenido" debe contener un párrafo de ${config.contentSentences} oraciones que resuma el contexto, profundice en los bullets e incluya ejemplos específicos.
+- El tono debe ser ${config.description}.
 - No repitas texto entre los bullets ni con el título y evita frases vacías como "importante" o "muy útil".
 - Incluye vocabulario profesional y mantén coherencia con el idioma del tema.
 

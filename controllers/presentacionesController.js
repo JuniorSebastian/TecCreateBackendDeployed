@@ -36,6 +36,38 @@ const {
 
 const SHARE_OUTPUT_DIR = path.resolve(__dirname, '..', 'public', 'shared-presentaciones');
 
+const VALID_LANGUAGES = ['Español', 'English', 'French'];
+const DEFAULT_LANGUAGE = 'Español';
+
+const VALID_DETAIL_LEVELS = ['Brief', 'Medium', 'Detailed'];
+const DEFAULT_DETAIL_LEVEL = 'Medium';
+
+const normalizeLanguage = (value) => {
+  if (typeof value !== 'string') {
+    return DEFAULT_LANGUAGE;
+  }
+
+  const normalized = value.trim();
+  const found = VALID_LANGUAGES.find(lang => 
+    lang.toLowerCase() === normalized.toLowerCase()
+  );
+
+  return found || DEFAULT_LANGUAGE;
+};
+
+const normalizeDetailLevel = (value) => {
+  if (typeof value !== 'string') {
+    return DEFAULT_DETAIL_LEVEL;
+  }
+
+  const normalized = value.trim();
+  const found = VALID_DETAIL_LEVELS.find(level => 
+    level.toLowerCase() === normalized.toLowerCase()
+  );
+
+  return found || DEFAULT_DETAIL_LEVEL;
+};
+
 const ensureDirectoryExists = async (dirPath) => {
   if (!dirPath) {
     return;
@@ -84,11 +116,12 @@ const getPublicBaseUrl = (req) => {
   return `${protocol}://${host}`;
 };
 
-const buildPresentacionBase = (tema, numSlides, idioma) => ({
+const buildPresentacionBase = (tema, numSlides, idioma, detailLevel = DEFAULT_DETAIL_LEVEL) => ({
   titulo: tema,
   contenido: Array.from({ length: numSlides }, (_, idx) => `Sección ${idx + 1}`),
   numero_slides: numSlides,
   idioma,
+  detailLevel,
 });
 
 const sanitizeSingleLine = (value) => {
@@ -654,11 +687,15 @@ exports.generarDiapositivasIA = async (req, res) => {
 
     const {
       tema,
-      idioma = 'Español',
+      idioma = DEFAULT_LANGUAGE,
       numeroSlides = 8,
+      detailLevel,
       slides: slidesFromClient,
       outline,
     } = req.body || {};
+
+    const normalizedIdioma = normalizeLanguage(idioma);
+    const normalizedDetailLevel = normalizeDetailLevel(detailLevel);
 
     if (!tema || typeof tema !== 'string' || !tema.trim()) {
       return res.status(400).json({ error: 'Debes proporcionar un tema válido' });
@@ -678,7 +715,7 @@ exports.generarDiapositivasIA = async (req, res) => {
 
       return res.json({
         tema: temaNormalizado,
-        idioma,
+        idioma: normalizedIdioma,
         slides: slidesConContenido,
       });
     }
@@ -692,7 +729,7 @@ exports.generarDiapositivasIA = async (req, res) => {
       ? Math.min(parsedSlides, 20)
       : 8;
 
-    const presentacionBase = buildPresentacionBase(temaNormalizado, slidesCount, idioma);
+    const presentacionBase = buildPresentacionBase(temaNormalizado, slidesCount, normalizedIdioma, normalizedDetailLevel);
 
     let normalizedSlides;
     try {
@@ -710,6 +747,8 @@ exports.generarDiapositivasIA = async (req, res) => {
 
     res.json({
       tema: temaNormalizado,
+      idioma: normalizedIdioma,
+      detailLevel: normalizedDetailLevel,
       idioma,
       slides,
     });
@@ -856,8 +895,9 @@ exports.generarPresentacionIAyExportar = async (req, res) => {
 
     const {
       tema,
-      idioma = 'Español',
+      idioma = DEFAULT_LANGUAGE,
       numeroSlides = 8,
+      detailLevel,
       guardar = false,
       plantilla,
       fuente,
@@ -877,7 +917,9 @@ exports.generarPresentacionIAyExportar = async (req, res) => {
       : 8;
 
     const temaNormalizado = tema.trim();
-    const presentacionBase = buildPresentacionBase(temaNormalizado, slidesCount, idioma);
+    const normalizedIdioma = normalizeLanguage(idioma);
+    const normalizedDetailLevel = normalizeDetailLevel(detailLevel);
+    const presentacionBase = buildPresentacionBase(temaNormalizado, slidesCount, normalizedIdioma, normalizedDetailLevel);
     const plantillaKey = resolveTemplateKey(plantilla);
     const fuenteKey = resolveFontKey(fuente);
 
@@ -936,13 +978,13 @@ exports.generarPresentacionIAyExportar = async (req, res) => {
           const resultado = await generateImagesForPresentation(savedId, {
             slides: normalizedSlides,
             titulo: temaNormalizado,
-            idioma,
+            idioma: normalizedIdioma,
           });
           imagenes = resultado.imagenes || [];
         } else {
           imagenes = await generateImagesForSlides(normalizedSlides, {
             titulo: temaNormalizado,
-            idioma,
+            idioma: normalizedIdioma,
           });
         }
       } catch (imageError) {
@@ -953,7 +995,7 @@ exports.generarPresentacionIAyExportar = async (req, res) => {
     const pptBuffer = await crearPresentacionPptx({
       titulo: temaNormalizado,
       contenido: normalizedSlides,
-      idioma,
+      idioma: normalizedIdioma,
       numero_slides: normalizedSlides.length,
       autor,
       imagenes,
@@ -1124,7 +1166,7 @@ exports.exportarTemaSugerido = async (req, res) => {
       ? Math.min(slidesOverride, 20)
       : topic.slides;
 
-  const idioma = idiomaOverride || topic.idioma || 'Español';
+  const idioma = normalizeLanguage(idiomaOverride || topic.idioma || DEFAULT_LANGUAGE);
   const plantillaKey = resolveTemplateKey(plantillaOverride || topic.plantilla || topic.category?.defaultTemplate);
   const fontKey = resolveFontKey(fuenteOverride || topic.font || topic.category?.defaultFont);
 

@@ -79,7 +79,7 @@ GOOGLE_CLIENT_SECRET=<client_secret>
 GOOGLE_CALLBACK_URL=https://<tu-backend>/auth/google/callback
 
 GROQ_API_KEY=<opcional>
-GEMINI_API_KEY=<opcional>
+GEMINI_API_KEY=AIzaSyDlr0qbgPS3o3ygYi1FzSDJnhhjbxPghKs
 GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
 GEMINI_IMAGE_MODEL_FALLBACK=gemini-2.5-flash-image
 MAINTENANCE_GATE_SECRET=<opcional>
@@ -274,6 +274,8 @@ Para detalles completos revisa los controladores en `controllers/` o el manual t
 
 ## IA y generación de PPTX
 
+### Modelos de IA
+
 - **Groq** (`GROQ_API_KEY`): genera el contenido textual de las slides con modelos como `llama3-70b-8192`.
 - **Gemini** (`GEMINI_API_KEY` + `GEMINI_IMAGE_MODEL` + `GEMINI_IMAGE_MODEL_FALLBACK`): crea imágenes temáticas opcionales para cada diapositiva.
   - **Modelo principal**: configurado en `GEMINI_IMAGE_MODEL` (por defecto: `gemini-2.0-flash-preview-image-generation`)
@@ -289,6 +291,82 @@ Para detalles completos revisa los controladores en `controllers/` o el manual t
   - **Response**: imagen en `candidates[].content.parts[].inlineData.data`
 - **pptxgenjs**: arma el archivo PPTX usando plantillas temáticas (`utils/pptThemes.js`) y fuentes personalizadas (`utils/pptFonts.js`).
 - **Degradación elegante**: si no hay claves configuradas o ningún modelo está disponible, el backend funciona sin imágenes generadas (se crean esquemas básicos con texto únicamente).
+
+### Idiomas soportados
+
+El sistema soporta **3 idiomas** validados y normalizados automáticamente:
+
+- **Español** (por defecto)
+- **English**
+- **French**
+
+Para usar un idioma específico, envía el parámetro `idioma` en tus peticiones:
+
+```json
+{
+  "tema": "Inteligencia Artificial",
+  "idioma": "English",
+  "numeroSlides": 8
+}
+```
+
+Si se envía un idioma no soportado, el sistema usará automáticamente Español.
+
+### Niveles de detalle
+
+El sistema ofrece **3 niveles de detalle** para controlar la profundidad del contenido generado:
+
+- **Brief**: Presentación concisa y directa
+  - 3 bullets por slide (8-12 palabras cada uno)
+  - 2 oraciones en el contenido descriptivo
+  - Ideal para: resúmenes ejecutivos, pitch decks, presentaciones rápidas
+
+- **Medium** (por defecto): Equilibrio profesional
+  - 4 bullets por slide (10-18 palabras cada uno)
+  - 3 oraciones en el contenido descriptivo
+  - Ideal para: presentaciones corporativas, clases estándar, informes
+
+- **Detailed**: Exhaustivo y profundo
+  - 5 bullets por slide (15-25 palabras cada uno)
+  - 4 oraciones en el contenido descriptivo
+  - Ideal para: documentación técnica, capacitaciones extensas, investigación
+
+Ejemplo de uso:
+
+```json
+{
+  "tema": "Arquitectura de Microservicios",
+  "idioma": "Español",
+  "detailLevel": "Detailed",
+  "numeroSlides": 10
+}
+```
+
+### Estilos de presentación (Plantillas)
+
+El sistema incluye **3 estilos visuales** principales:
+
+- **default**: TecCreate Clásico
+  - Paleta corporativa con azules brillantes y fondos claros
+  - Colores: `#1D4ED8`, `#0F172A`, `#BFDBFE`, `#F8FAFC`
+
+- **modern**: Moderno
+  - Diseño contemporáneo con gradientes suaves y espacios amplios
+  - Colores: `#007BFF`, `#2C2C2C`, `#7C4DFF`, `#FFFFFF`
+
+- **minimal**: Minimalista
+  - Diseño limpio y elegante con enfoque en el contenido
+  - Colores: `#000000`, `#FFFFFF`, `#F5F5F5`, `#E0E0E0`
+
+Ejemplo de uso:
+
+```json
+{
+  "tema": "UX Design Principles",
+  "plantilla": "minimal",
+  "fuente": "roboto"
+}
+```
 
 ## Soporte y mantenimiento
 
