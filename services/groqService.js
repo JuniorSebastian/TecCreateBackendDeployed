@@ -180,6 +180,7 @@ const buildPrompt = (presentacion) => {
   const tema = presentacion.titulo || 'Presentación profesional';
   const slideCount = resolveDesiredSlideCount(presentacion);
   const detailLevel = presentacion.detailLevel || presentacion.nivel || 'Medium';
+  const writingStyle = presentacion.estilo || presentacion.style || 'Professional';
 
   // Configuración basada en nivel de detalle
   const detailConfig = {
@@ -203,7 +204,30 @@ const buildPrompt = (presentacion) => {
     },
   };
 
+  // Configuración de estilos de escritura
+  const styleConfig = {
+    Professional: {
+      tone: 'formal y técnico',
+      vocabulary: 'terminología profesional especializada',
+      structure: 'Usa lenguaje corporativo, datos precisos, métricas y KPIs',
+      examples: 'casos de estudio empresariales y estadísticas verificables',
+    },
+    Casual: {
+      tone: 'conversacional y accesible',
+      vocabulary: 'lenguaje cotidiano y analogías simples',
+      structure: 'Usa ejemplos del día a día, preguntas retóricas y tono cercano',
+      examples: 'situaciones cotidianas y metáforas familiares',
+    },
+    Academic: {
+      tone: 'riguroso y analítico',
+      vocabulary: 'terminología científica y académica',
+      structure: 'Usa referencias conceptuales, análisis crítico y argumentación fundamentada',
+      examples: 'teorías, modelos y estudios de investigación',
+    },
+  };
+
   const config = detailConfig[detailLevel] || detailConfig.Medium;
+  const style = styleConfig[writingStyle] || styleConfig.Professional;
 
   return `Genera una lista de diapositivas sobre el siguiente tema en formato JSON válido y altamente informativo.
 
@@ -227,7 +251,13 @@ Instrucciones estrictas:
 - El campo "contenido" debe contener un párrafo de ${config.contentSentences} oraciones que resuma el contexto, profundice en los bullets e incluya ejemplos específicos.
 - El tono debe ser ${config.description}.
 - No repitas texto entre los bullets ni con el título y evita frases vacías como "importante" o "muy útil".
-- Incluye vocabulario profesional y mantén coherencia con el idioma del tema.
+- Mantén coherencia con el idioma del tema.
+
+ESTILO DE ESCRITURA: ${writingStyle}
+- Tono: ${style.tone}
+- Vocabulario: ${style.vocabulary}
+- Estructura: ${style.structure}
+- Ejemplos: ${style.examples}
 
 Tema: ${tema}`;
 };

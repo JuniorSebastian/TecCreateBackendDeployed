@@ -342,28 +342,61 @@ Ejemplo de uso:
 }
 ```
 
-### Estilos de presentación (Plantillas)
+### Estilos de escritura
 
-El sistema incluye **3 estilos visuales** principales:
+El sistema soporta **3 estilos de escritura** que controlan el tono y vocabulario del contenido generado:
 
-- **default**: TecCreate Clásico
-  - Paleta corporativa con azules brillantes y fondos claros
-  - Colores: `#1D4ED8`, `#0F172A`, `#BFDBFE`, `#F8FAFC`
+- **Professional** (por defecto): Tono formal y técnico
+  - Lenguaje corporativo con datos precisos, métricas y KPIs
+  - Terminología profesional especializada
+  - Casos de estudio empresariales y estadísticas verificables
+  - Ideal para: presentaciones ejecutivas, informes corporativos, propuestas de negocio
 
-- **modern**: Moderno
-  - Diseño contemporáneo con gradientes suaves y espacios amplios
-  - Colores: `#007BFF`, `#2C2C2C`, `#7C4DFF`, `#FFFFFF`
+- **Casual**: Tono conversacional y accesible
+  - Lenguaje cotidiano con analogías simples
+  - Ejemplos del día a día y metáforas familiares
+  - Preguntas retóricas y tono cercano
+  - Ideal para: talleres, presentaciones educativas, onboarding
 
-- **minimal**: Minimalista
-  - Diseño limpio y elegante con enfoque en el contenido
-  - Colores: `#000000`, `#FFFFFF`, `#F5F5F5`, `#E0E0E0`
+- **Academic**: Tono riguroso y analítico
+  - Terminología científica y académica
+  - Referencias conceptuales y análisis crítico
+  - Teorías, modelos y estudios de investigación
+  - Ideal para: tesis, papers, conferencias académicas, capacitaciones técnicas
 
 Ejemplo de uso:
 
 ```json
 {
-  "tema": "UX Design Principles",
-  "plantilla": "minimal",
+  "tema": "Machine Learning Basics",
+  "idioma": "English",
+  "detailLevel": "Medium",
+  "estilo": "Academic",
+  "numeroSlides": 12
+}
+```
+
+### Plantillas visuales (Temas de carrera)
+
+El sistema incluye **7 plantillas visuales**:
+
+**Estilos básicos:**
+- **default**: TecCreate Clásico - Paleta corporativa con azules brillantes
+- **modern**: Moderno - Diseño contemporáneo con gradientes suaves
+- **minimal**: Minimalista - Diseño limpio y elegante
+
+**Temas de carrera:**
+- **software**: Diseño y Desarrollo de Software - UI modernas con azul eléctrico y acentos violetas
+- **maquinaria**: Gestión y Mantenimiento de Maquinaria - Colores industriales con amarillo maquinaria
+- **mecatronica**: Mecatrónica Industrial - Azul cobalto y verde neón para look futurista
+- **quimica**: Procesos Químicos y Metalúrgicos - Azul petróleo con acentos cobre
+
+Ejemplo de uso:
+
+```json
+{
+  "tema": "Industria 4.0",
+  "plantilla": "mecatronica",
   "fuente": "roboto"
 }
 ```

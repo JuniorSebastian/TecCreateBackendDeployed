@@ -42,6 +42,9 @@ const DEFAULT_LANGUAGE = 'Español';
 const VALID_DETAIL_LEVELS = ['Brief', 'Medium', 'Detailed'];
 const DEFAULT_DETAIL_LEVEL = 'Medium';
 
+const VALID_WRITING_STYLES = ['Professional', 'Casual', 'Academic'];
+const DEFAULT_WRITING_STYLE = 'Professional';
+
 const normalizeLanguage = (value) => {
   if (typeof value !== 'string') {
     return DEFAULT_LANGUAGE;
@@ -66,6 +69,19 @@ const normalizeDetailLevel = (value) => {
   );
 
   return found || DEFAULT_DETAIL_LEVEL;
+};
+
+const normalizeWritingStyle = (value) => {
+  if (typeof value !== 'string') {
+    return DEFAULT_WRITING_STYLE;
+  }
+
+  const normalized = value.trim();
+  const found = VALID_WRITING_STYLES.find(style => 
+    style.toLowerCase() === normalized.toLowerCase()
+  );
+
+  return found || DEFAULT_WRITING_STYLE;
 };
 
 const ensureDirectoryExists = async (dirPath) => {
@@ -116,12 +132,13 @@ const getPublicBaseUrl = (req) => {
   return `${protocol}://${host}`;
 };
 
-const buildPresentacionBase = (tema, numSlides, idioma, detailLevel = DEFAULT_DETAIL_LEVEL) => ({
+const buildPresentacionBase = (tema, numSlides, idioma, detailLevel = DEFAULT_DETAIL_LEVEL, estilo = DEFAULT_WRITING_STYLE) => ({
   titulo: tema,
   contenido: Array.from({ length: numSlides }, (_, idx) => `Sección ${idx + 1}`),
   numero_slides: numSlides,
   idioma,
   detailLevel,
+  estilo,
 });
 
 const sanitizeSingleLine = (value) => {
@@ -690,12 +707,14 @@ exports.generarDiapositivasIA = async (req, res) => {
       idioma = DEFAULT_LANGUAGE,
       numeroSlides = 8,
       detailLevel,
+      estilo,
       slides: slidesFromClient,
       outline,
     } = req.body || {};
 
     const normalizedIdioma = normalizeLanguage(idioma);
     const normalizedDetailLevel = normalizeDetailLevel(detailLevel);
+    const normalizedEstilo = normalizeWritingStyle(estilo);
 
     if (!tema || typeof tema !== 'string' || !tema.trim()) {
       return res.status(400).json({ error: 'Debes proporcionar un tema válido' });
@@ -729,7 +748,7 @@ exports.generarDiapositivasIA = async (req, res) => {
       ? Math.min(parsedSlides, 20)
       : 8;
 
-    const presentacionBase = buildPresentacionBase(temaNormalizado, slidesCount, normalizedIdioma, normalizedDetailLevel);
+    const presentacionBase = buildPresentacionBase(temaNormalizado, slidesCount, normalizedIdioma, normalizedDetailLevel, normalizedEstilo);
 
     let normalizedSlides;
     try {
@@ -749,7 +768,7 @@ exports.generarDiapositivasIA = async (req, res) => {
       tema: temaNormalizado,
       idioma: normalizedIdioma,
       detailLevel: normalizedDetailLevel,
-      idioma,
+      estilo: normalizedEstilo,
       slides,
     });
   } catch (err) {
@@ -898,6 +917,7 @@ exports.generarPresentacionIAyExportar = async (req, res) => {
       idioma = DEFAULT_LANGUAGE,
       numeroSlides = 8,
       detailLevel,
+      estilo,
       guardar = false,
       plantilla,
       fuente,
@@ -919,7 +939,8 @@ exports.generarPresentacionIAyExportar = async (req, res) => {
     const temaNormalizado = tema.trim();
     const normalizedIdioma = normalizeLanguage(idioma);
     const normalizedDetailLevel = normalizeDetailLevel(detailLevel);
-    const presentacionBase = buildPresentacionBase(temaNormalizado, slidesCount, normalizedIdioma, normalizedDetailLevel);
+    const normalizedEstilo = normalizeWritingStyle(estilo);
+    const presentacionBase = buildPresentacionBase(temaNormalizado, slidesCount, normalizedIdioma, normalizedDetailLevel, normalizedEstilo);
     const plantillaKey = resolveTemplateKey(plantilla);
     const fuenteKey = resolveFontKey(fuente);
 
@@ -1159,6 +1180,8 @@ exports.exportarTemaSugerido = async (req, res) => {
   const overrides = req.body || {};
   const slidesOverride = Number.parseInt(overrides.numeroSlides ?? overrides.slides, 10);
   const idiomaOverride = typeof overrides.idioma === 'string' ? overrides.idioma.trim() : '';
+  const estiloOverride = typeof overrides.estilo === 'string' ? overrides.estilo.trim() : '';
+  const detailLevelOverride = typeof overrides.detailLevel === 'string' ? overrides.detailLevel.trim() : '';
   const plantillaOverride = overrides.plantilla;
   const fuenteOverride = overrides.fuente;
 
@@ -1167,10 +1190,12 @@ exports.exportarTemaSugerido = async (req, res) => {
       : topic.slides;
 
   const idioma = normalizeLanguage(idiomaOverride || topic.idioma || DEFAULT_LANGUAGE);
+  const estilo = normalizeWritingStyle(estiloOverride || DEFAULT_WRITING_STYLE);
+  const detailLevel = normalizeDetailLevel(detailLevelOverride || DEFAULT_DETAIL_LEVEL);
   const plantillaKey = resolveTemplateKey(plantillaOverride || topic.plantilla || topic.category?.defaultTemplate);
   const fontKey = resolveFontKey(fuenteOverride || topic.font || topic.category?.defaultFont);
 
-    const base = buildPresentacionBase(topic.title, slidesCount, idioma);
+    const base = buildPresentacionBase(topic.title, slidesCount, idioma, detailLevel, estilo);
 
     const presentacion = {
       id: null,
