@@ -27,17 +27,29 @@ router.get('/google', (req, res) => {
 
 // Callback de Google
 router.get('/google/callback', async (req, res) => {
+  // Helper to send structured errors: JSON when requested, or redirect to frontend /oauth-error
+  const sendError = (errorCode, message, status = 400) => {
+    console.error('OAuth callback error:', errorCode, message);
+    const acceptsJson = String(req.headers.accept || '').includes('application/json') || req.xhr;
+    if (acceptsJson) {
+      return res.status(status).json({ error: errorCode, message });
+    }
+    // Redirect to frontend oauth-error page (frontend should implement this route)
+    const safeMsg = message ? `&message=${encodeURIComponent(message)}` : '';
+    return res.redirect(`${process.env.CLIENT_URL}/oauth-error?error=${encodeURIComponent(errorCode)}${safeMsg}`);
+  };
+
   try {
+    console.log('Callback recibido:', req.query);
     const code = req.query.code;
     const error = req.query.error;
 
     if (error) {
-      // El usuario rechazó o Google devolvió error
-      return res.redirect(`${process.env.CLIENT_URL}/login-error?error=${encodeURIComponent(error)}`);
+      return sendError('google_error', `Google returned error: ${error}`, 400);
     }
 
     if (!code) {
-      return res.redirect(`${process.env.CLIENT_URL}/login-error?error=${encodeURIComponent('missing_code')}`);
+      return sendError('missing_code', 'Missing authorization code from Google', 400);
     }
 
     const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -45,10 +57,10 @@ router.get('/google/callback', async (req, res) => {
     const redirectUri = process.env.GOOGLE_REDIRECT_URI || process.env.GOOGLE_CALLBACK_URL;
 
     if (!clientId || !clientSecret || !redirectUri) {
-      console.error('Google OAuth env vars missing');
-      return res.redirect(`${process.env.CLIENT_URL}/login-error?error=${encodeURIComponent('oauth_not_configured')}`);
+      return sendError('oauth_not_configured', 'OAuth environment variables not configured', 500);
     }
 
+    console.log('Intercambiando código por tokens...');
     // 1) Intercambiar code por tokens
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -64,45 +76,42 @@ router.get('/google/callback', async (req, res) => {
 
     if (!tokenResponse.ok) {
       const text = await tokenResponse.text();
-      console.error('Error exchanging code for tokens:', tokenResponse.status, text);
-      return res.redirect(`${process.env.CLIENT_URL}/login-error?error=${encodeURIComponent('token_exchange_failed')}`);
+      return sendError('token_exchange_failed', `Token exchange failed: ${text}`, 502);
     }
 
     const tokenJson = await tokenResponse.json();
+    console.log('Token response received (id_token present?):', Boolean(tokenJson.id_token));
     const idToken = tokenJson.id_token;
     const accessToken = tokenJson.access_token;
 
     if (!idToken) {
-      console.error('No id_token returned from Google token exchange', tokenJson);
-      return res.redirect(`${process.env.CLIENT_URL}/login-error?error=${encodeURIComponent('no_id_token')}`);
+      return sendError('no_id_token', 'No id_token returned from Google', 502);
     }
 
+    console.log('Validando id_token...');
     // 2) Verificar id_token usando tokeninfo endpoint
     const infoResponse = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
     if (!infoResponse.ok) {
       const text = await infoResponse.text();
-      console.error('id_token validation failed:', infoResponse.status, text);
-      return res.redirect(`${process.env.CLIENT_URL}/login-error?error=${encodeURIComponent('invalid_id_token')}`);
+      return sendError('invalid_id_token', `id_token validation failed: ${text}`, 502);
     }
 
     const profile = await infoResponse.json();
+    console.log('Perfil obtenido del id_token:', { email: profile.email, name: profile.name });
 
-    // profile contains: email, email_verified, name, picture, aud, iss, exp, etc.
     const email = (profile.email || '').toLowerCase();
     const nombre = profile.name || profile.given_name || '';
     const foto = profile.picture || null;
 
     if (!email) {
-      console.error('No email in id_token payload', profile);
-      return res.redirect(`${process.env.CLIENT_URL}/login-error?error=${encodeURIComponent('no_email')}`);
+      return sendError('no_email', 'No email in id_token payload', 502);
     }
 
-    // 3) Domain restriction
     if (!email.endsWith('@tecsup.edu.pe')) {
-      console.warn('Rejected non-institutional email login attempt:', email);
-      return res.redirect(`${process.env.CLIENT_URL}/login-error?error=${encodeURIComponent('email_not_allowed')}`);
+      return sendError('email_not_allowed', 'Email domain is not allowed', 403);
     }
 
+    console.log('Buscando/creando usuario en la BD:', email);
     // 4) Upsert user in DB and check suspension
     try {
       await pool.query(`
@@ -117,19 +126,18 @@ router.get('/google/callback', async (req, res) => {
       );
 
       if (!userResult.rows.length) {
-        console.error('User inserted but cannot be retrieved:', email);
-        return res.redirect(`${process.env.CLIENT_URL}/login-error?error=${encodeURIComponent('user_fetch_failed')}`);
+        return sendError('user_fetch_failed', 'User inserted but cannot be retrieved', 500);
       }
 
       const user = userResult.rows[0];
+      console.log('Usuario encontrado/creado:', { id: user.id, email: user.email, estado: user.estado });
 
       if (user.estado === 'suspendido') {
-        // Crear token limitado para apelaciones
         const tokenSuspendido = jwt.sign({ id: user.id, nombre: user.nombre, email: user.email, foto: user.foto, rol: user.rol, estado: user.estado }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        return res.redirect(`${process.env.CLIENT_URL}/oauth-success?token=${tokenSuspendido}&user=${encodeURIComponent(JSON.stringify({ id: user.id, nombre: user.nombre, email: user.email }))}&redirect=/cuenta-suspendida&suspendido=1`);
+        const redirectUrl = `${process.env.CLIENT_URL}/oauth-success?token=${tokenSuspendido}&user=${encodeURIComponent(JSON.stringify({ id: user.id, nombre: user.nombre, email: user.email }))}&redirect=/cuenta-suspendida&suspendido=1`;
+        return res.redirect(redirectUrl);
       }
 
-      // 5) Maintenance gate (optional)
       try {
         const mantenimiento = await getMaintenanceGateInfo();
         if (mantenimiento.activo && (user.rol || 'usuario').toLowerCase() === 'usuario') {
@@ -137,24 +145,21 @@ router.get('/google/callback', async (req, res) => {
         }
       } catch (mErr) {
         console.error('Error checking maintenance gate:', mErr);
-        // no bloquear login por fallo en la comprobación; continuar
       }
 
-      // 6) Crear JWT y redirigir al frontend
       const token = jwt.sign({ id: user.id, nombre: user.nombre, email: user.email, foto: user.foto, rol: (user.rol || 'usuario').toLowerCase(), estado: user.estado || 'activo' }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
 
       const roleRedirects = { admin: '/admin', soporte: '/soporte', usuario: '/perfil' };
       const redirectPath = roleRedirects[(user.rol || 'usuario').toLowerCase()] || roleRedirects.usuario;
 
       const redirectUrl = `${process.env.CLIENT_URL}/oauth-success?token=${token}&user=${encodeURIComponent(JSON.stringify({ id: user.id, nombre: user.nombre, email: user.email }))}&redirect=${encodeURIComponent(redirectPath)}`;
+      console.log('Login exitoso, redirigiendo a frontend:', redirectUrl);
       return res.redirect(redirectUrl);
     } catch (dbErr) {
-      console.error('Database error during OAuth callback processing:', dbErr);
-      return res.redirect(`${process.env.CLIENT_URL}/login-error?error=${encodeURIComponent('db_error')}`);
+      return sendError('db_error', `Database error: ${dbErr.message}`, 500);
     }
   } catch (ex) {
-    console.error('Unexpected error in /auth/google/callback:', ex);
-    return res.redirect(`${process.env.CLIENT_URL}/login-error?error=${encodeURIComponent('unexpected_error')}`);
+    return sendError('unexpected_error', `Unexpected error: ${String(ex && ex.message ? ex.message : ex)}`, 500);
   }
 });
 
