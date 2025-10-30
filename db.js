@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const fs = require('fs');
+const path = require('path');
 
 const hasExplicitSslFlag = typeof process.env.DATABASE_SSL === 'string';
 // For backwards compatibility: if not explicitly set, require SSL in production
@@ -39,6 +40,15 @@ const resolveDatabaseConfig = () => {
         console.log('DB: decoded DATABASE_SSL_CA_B64 into PEM content');
       } catch (e) {
         console.warn('DB: failed to decode DATABASE_SSL_CA_B64, ignoring');
+      }
+    }
+
+    // If no env provided, check for a local cert shipped with the app at ./certs/do-certs.pem
+    if (!rawCa) {
+      const defaultCaPath = path.join(__dirname, 'certs', 'do-certs.pem');
+      if (fs.existsSync(defaultCaPath)) {
+        rawCa = defaultCaPath;
+        console.log('DB: using local CA file at', defaultCaPath);
       }
     }
 
