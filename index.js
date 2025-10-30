@@ -16,7 +16,8 @@ const soporteRoutes = require('./routes/soporteRoutes');
 const app = express();
 // Server reference (initialized in startServer)
 let server = null;
-const PORT = process.env.PORT || 3001;
+// DigitalOcean App Platform typically expects apps to listen on 8080
+const PORT = Number(process.env.PORT || process.env.APP_PORT || 8080);
 const HOST = process.env.HOST || '0.0.0.0';
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -132,17 +133,33 @@ app.use('/soporte', soporteRoutes);
 // Antes de arrancar el servidor, comprobamos la conexión a la base de datos
 const pool = require('./db');
 
+async function waitForDb({ attempts = 12, delayMs = 5000 } = {}) {
+  console.log(`DB: comprobando conexión al arrancar (max ${attempts} intentos, ${delayMs}ms intervalo)...`);
+  for (let i = 1; i <= attempts; i += 1) {
+    try {
+      await pool.query('SELECT 1');
+      console.log('DB: conexión verificada correctamente.');
+      return true;
+    } catch (err) {
+      const msg = err && err.message ? err.message : String(err);
+      console.warn(`DB: intento ${i}/${attempts} fallido: ${msg}`);
+      if (i < attempts) {
+        await new Promise((r) => setTimeout(r, delayMs));
+      } else {
+        console.error('DB: máximos intentos de conexión alcanzados. No se puede iniciar la app.');
+        return false;
+      }
+    }
+  }
+  return false;
+}
+
 async function startServer() {
-  try {
-    console.log('DB: comprobando conexión al arrancar...');
-    // Hacemos una consulta simple para validar TLS/credenciales
-    await pool.query('SELECT 1');
-    console.log('DB: conexión verificada correctamente.');
-  } catch (err) {
-    console.error('DB: fallo en la comprobación al inicio. Deteniendo proceso.');
-    console.error(err && err.message ? err.message : err);
-    // Salimos con código 1 para que la plataforma marque el deploy como fallido
+  const ok = await waitForDb();
+  if (!ok) {
+    // Salimos con código 1 para que DigitalOcean marque el despliegue como fallido
     process.exit(1);
+    return;
   }
 
   // ✅ Servidor funcionando
@@ -156,6 +173,33 @@ async function startServer() {
 }
 
 startServer();
+
+// Graceful shutdown: cerramos servidor y pool de Postgres
+async function shutdown(signal) {
+  console.log(`\n🛑 Recibida señal ${signal} — cerrando servidor y conexiones...`);
+  try {
+    if (server && server.close) {
+      await new Promise((resolve) => server.close(resolve));
+      console.log('Servidor cerrado.');
+    }
+  } catch (e) {
+    console.warn('Error cerrando servidor:', e && e.message ? e.message : e);
+  }
+
+  try {
+    if (pool && pool.end) {
+      await pool.end();
+      console.log('Pool de Postgres finalizado.');
+    }
+  } catch (e) {
+    console.warn('Error cerrando pool de DB:', e && e.message ? e.message : e);
+  }
+
+  process.exit(0);
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 process.on('unhandledRejection', (reason) => {
   console.error('❌ Promesa rechazada no manejada:', reason);
