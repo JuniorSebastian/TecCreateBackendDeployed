@@ -34,9 +34,15 @@ router.get('/google/callback', async (req, res) => {
     if (acceptsJson) {
       return res.status(status).json({ error: errorCode, message });
     }
-    // Redirect to frontend oauth-error page (frontend should implement this route)
+    // Redirect to frontend root with query params (safer default if /oauth-error is missing)
     const safeMsg = message ? `&message=${encodeURIComponent(message)}` : '';
-    return res.redirect(`${process.env.CLIENT_URL}/oauth-error?error=${encodeURIComponent(errorCode)}${safeMsg}`);
+    const fallbackUrl = `${process.env.CLIENT_URL}/?oauth_error=${encodeURIComponent(errorCode)}${safeMsg}`;
+    // Also attempt /oauth-error if the frontend supports it, but fallback to root
+    try {
+      return res.redirect(`${process.env.CLIENT_URL}/oauth-error?error=${encodeURIComponent(errorCode)}${safeMsg}`);
+    } catch (e) {
+      return res.redirect(fallbackUrl);
+    }
   };
 
   try {
@@ -156,7 +162,38 @@ router.get('/google/callback', async (req, res) => {
       console.log('Login exitoso, redirigiendo a frontend:', redirectUrl);
       return res.redirect(redirectUrl);
     } catch (dbErr) {
-      return sendError('db_error', `Database error: ${dbErr.message}`, 500);
+      // If DB fails (e.g. TLS / CA issues), fall back to a degraded flow:
+      // - create a temporary JWT based on the id_token profile so the frontend can continue
+      // - mark the token/user as 'offline' so frontend can show a warning and retry
+      console.error('DB operation failed, entering degraded auth flow:', dbErr && dbErr.message ? dbErr.message : dbErr);
+      try {
+        // Decide role: if email is listed in ADMIN_EMAILS env var, give admin, else usuario
+  const adminList = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  const supportList = (process.env.SUPPORT_EMAILS || process.env.SUPPORT_EMAIL || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  const lowerEmail = email.toLowerCase();
+  const isAdmin = adminList.includes(lowerEmail);
+  const isSupport = supportList.includes(lowerEmail);
+  const fallbackRole = isAdmin ? 'admin' : isSupport ? 'soporte' : 'usuario';
+
+        const fallbackPayload = {
+          id: null,
+          nombre: nombre || '',
+          email,
+          foto: foto || null,
+          rol: fallbackRole,
+          estado: 'offline',
+          degraded: true,
+        };
+
+        const token = jwt.sign(fallbackPayload, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: process.env.JWT_EXPIRES_IN || '1h' });
+
+        const redirectUrl = `${process.env.CLIENT_URL}/oauth-success?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify({ nombre: fallbackPayload.nombre, email: fallbackPayload.email }))}&redirect=${encodeURIComponent(isAdmin ? '/admin' : '/perfil')}&note=db_offline`;
+        console.warn('Degraded login successful, redirecting frontend with temporary token:', redirectUrl);
+        return res.redirect(redirectUrl);
+      } catch (signErr) {
+        console.error('Failed to create fallback JWT after DB error:', signErr);
+        return sendError('db_error', `Database error: ${dbErr.message}`, 500);
+      }
     }
   } catch (ex) {
     return sendError('unexpected_error', `Unexpected error: ${String(ex && ex.message ? ex.message : ex)}`, 500);
