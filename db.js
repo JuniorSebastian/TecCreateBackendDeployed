@@ -30,7 +30,18 @@ const resolveDatabaseConfig = () => {
   let ssl = false;
   if (shouldForceSsl || connectionStringRequiresSsl) {
     const allowSelfSigned = String(process.env.DATABASE_SSL_ALLOW_SELF_SIGNED || 'false').toLowerCase() === 'true';
-    const rawCa = process.env.DATABASE_SSL_CA; // optional: PEM string or path to file
+    // Support both a raw PEM in DATABASE_SSL_CA or a base64-encoded PEM in DATABASE_SSL_CA_B64
+    const rawCaB64 = process.env.DATABASE_SSL_CA_B64;
+    let rawCa = process.env.DATABASE_SSL_CA; // optional: PEM string or path to file
+    if (!rawCa && rawCaB64) {
+      try {
+        rawCa = Buffer.from(rawCaB64, 'base64').toString('utf8');
+        console.log('DB: decoded DATABASE_SSL_CA_B64 into PEM content');
+      } catch (e) {
+        console.warn('DB: failed to decode DATABASE_SSL_CA_B64, ignoring');
+      }
+    }
+
     if (rawCa) {
       let caContent = rawCa;
       try {
