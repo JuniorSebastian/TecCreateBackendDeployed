@@ -42,7 +42,7 @@ const DEFAULT_LANGUAGE = 'Español';
 const VALID_DETAIL_LEVELS = ['Brief', 'Medium', 'Detailed'];
 const DEFAULT_DETAIL_LEVEL = 'Medium';
 
-const VALID_WRITING_STYLES = ['Professional', 'Casual', 'Academic'];
+const VALID_WRITING_STYLES = ['Professional', 'Casual', 'Academic', 'Default', 'Modern', 'Minimal', 'default', 'modern', 'minimal'];
 const DEFAULT_WRITING_STYLE = 'Professional';
 
 const normalizeLanguage = (value) => {

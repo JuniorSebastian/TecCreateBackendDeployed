@@ -180,7 +180,19 @@ const buildPrompt = (presentacion) => {
   const tema = presentacion.titulo || 'Presentación profesional';
   const slideCount = resolveDesiredSlideCount(presentacion);
   const detailLevel = presentacion.detailLevel || presentacion.nivel || 'Medium';
-  const writingStyle = presentacion.estilo || presentacion.style || 'Professional';
+  
+  // Mapeo de estilos visuales a estilos de escritura
+  const styleMapping = {
+    'Default': 'Professional',
+    'Modern': 'Casual',
+    'Minimal': 'Academic',
+    'default': 'Professional',
+    'modern': 'Casual',
+    'minimal': 'Academic',
+  };
+  
+  const rawStyle = presentacion.estilo || presentacion.style || 'Professional';
+  const writingStyle = styleMapping[rawStyle] || rawStyle;
 
   // Configuración basada en nivel de detalle
   const detailConfig = {

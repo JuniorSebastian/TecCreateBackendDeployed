@@ -344,23 +344,30 @@ Ejemplo de uso:
 
 ### Estilos de escritura
 
-El sistema soporta **3 estilos de escritura** que controlan el tono y vocabulario del contenido generado:
+El sistema soporta **3 estilos de escritura** que controlan el tono y vocabulario del contenido generado.
 
-- **Professional** (por defecto): Tono formal y técnico
+**Puedes usar los nombres del frontend o los nombres técnicos:**
+
+| **Frontend** | **Backend** | **Descripción** |
+|-------------|------------|----------------|
+| `Default` | `Professional` | Tono formal y técnico con terminología corporativa |
+| `Modern` | `Casual` | Tono conversacional y accesible con lenguaje cotidiano |
+| `Minimal` | `Academic` | Tono riguroso y analítico con terminología científica |
+
+**Características de cada estilo:**
+
+- **Professional (Default)**: 
   - Lenguaje corporativo con datos precisos, métricas y KPIs
-  - Terminología profesional especializada
   - Casos de estudio empresariales y estadísticas verificables
   - Ideal para: presentaciones ejecutivas, informes corporativos, propuestas de negocio
 
-- **Casual**: Tono conversacional y accesible
-  - Lenguaje cotidiano con analogías simples
+- **Casual (Modern)**: 
+  - Lenguaje cotidiano con analogías simples y tono cercano
   - Ejemplos del día a día y metáforas familiares
-  - Preguntas retóricas y tono cercano
   - Ideal para: talleres, presentaciones educativas, onboarding
 
-- **Academic**: Tono riguroso y analítico
-  - Terminología científica y académica
-  - Referencias conceptuales y análisis crítico
+- **Academic (Minimal)**: 
+  - Terminología científica con análisis crítico y argumentación fundamentada
   - Teorías, modelos y estudios de investigación
   - Ideal para: tesis, papers, conferencias académicas, capacitaciones técnicas
 
@@ -371,7 +378,19 @@ Ejemplo de uso:
   "tema": "Machine Learning Basics",
   "idioma": "English",
   "detailLevel": "Medium",
-  "estilo": "Academic",
+  "estilo": "Default",
+  "numeroSlides": 12
+}
+```
+
+O con el nombre técnico:
+
+```json
+{
+  "tema": "Machine Learning Basics",
+  "idioma": "English",
+  "detailLevel": "Medium",
+  "estilo": "Professional",
   "numeroSlides": 12
 }
 ```
