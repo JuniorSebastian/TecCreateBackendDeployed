@@ -14,6 +14,8 @@ const reportesRoutes = require('./routes/reportesRoutes');
 const soporteRoutes = require('./routes/soporteRoutes');
 
 const app = express();
+// Server reference (initialized in startServer)
+let server = null;
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 const isProduction = process.env.NODE_ENV === 'production';
@@ -144,15 +146,13 @@ async function startServer() {
   }
 
   // ✅ Servidor funcionando
-  const server = app.listen(PORT, HOST, () => {
+  server = app.listen(PORT, HOST, () => {
     console.log(`✅ Servidor corriendo en http://${HOST}:${PORT}`);
   });
 
   server.on('close', () => {
     console.log('🛑 Servidor detenido');
   });
-
-  module.exports = server;
 }
 
 startServer();
@@ -167,4 +167,9 @@ process.on('uncaughtException', (err) => {
 
 setInterval(() => {}, 60_000);
 
-module.exports = server;
+// Export startup and helpers so tests or external tools can control lifecycle.
+module.exports = {
+  startServer,
+  getServer: () => server,
+  app,
+};
