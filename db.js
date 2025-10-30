@@ -1,6 +1,8 @@
 const { Pool } = require('pg');
+const fs = require('fs');
 
 const hasExplicitSslFlag = typeof process.env.DATABASE_SSL === 'string';
+// For backwards compatibility: if not explicitly set, require SSL in production
 const shouldForceSsl = hasExplicitSslFlag
   ? process.env.DATABASE_SSL === 'true'
   : process.env.RENDER === 'true' || process.env.NODE_ENV === 'production';
@@ -20,11 +22,45 @@ const resolveDatabaseConfig = () => {
 
   const connectionString = process.env.DATABASE_URL;
 
-  const ssl = shouldForceSsl
-    ? { require: true, rejectUnauthorized: false }
-    : false;
+  // SSL options: allow providing a CA PEM via DATABASE_SSL_CA (either the PEM text or a path)
+  // or allow self-signed certs when DATABASE_SSL_ALLOW_SELF_SIGNED=true
+  let ssl = false;
+  if (shouldForceSsl) {
+    const allowSelfSigned = String(process.env.DATABASE_SSL_ALLOW_SELF_SIGNED || 'false').toLowerCase() === 'true';
+    const rawCa = process.env.DATABASE_SSL_CA; // optional: PEM string or path to file
+    if (rawCa) {
+      let caContent = rawCa;
+      try {
+        // If the env var looks like a path to a file, try to read it
+        if (!rawCa.includes('-----BEGIN') && fs.existsSync(rawCa)) {
+          caContent = fs.readFileSync(rawCa, 'utf8');
+        }
+      } catch (e) {
+        // ignore read errors; we'll fallback
+      }
+
+      ssl = { ca: caContent, rejectUnauthorized: true };
+    } else if (allowSelfSigned) {
+      // WARNING: allow self-signed certs (insecure). Use only for testing or if you trust the network.
+      ssl = { rejectUnauthorized: false };
+      // Also set the Node option to allow self-signed certs in case lower-level TLS blocks
+      try {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+      } catch (e) {
+        // ignore
+      }
+    } else {
+      // Default: try to connect but do not reject unauthorized by default to improve compatibility
+      ssl = { rejectUnauthorized: false };
+    }
+  }
 
   if (connectionString) {
+    // Do not log sensitive values; but help debugging by indicating SSL mode
+    console.log('DB config: using connectionString, ssl enabled:', Boolean(ssl));
+    if (ssl && typeof ssl === 'object') {
+      console.log('DB SSL config: rejectUnauthorized=', String(ssl.rejectUnauthorized));
+    }
     return { connectionString, ssl, ...baseConfig };
   }
 
