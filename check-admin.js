@@ -1,11 +1,8 @@
-const { Pool } = require('pg');
 require('dotenv').config();
+// Reuse the project's DB pool which already applies SSL settings
+const pool = require('./db');
 
 async function main() {
-  // Crear una conexión independiente para no interferir con el servidor
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-  });
 
   try {
     console.log('Verificando usuario con ID 1:');
@@ -46,7 +43,7 @@ async function main() {
   } catch (err) {
     console.error('Error:', err);
   } finally {
-    await pool.end();
+    if (pool && typeof pool.end === 'function') await pool.end();
   }
 }
 

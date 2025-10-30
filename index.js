@@ -127,15 +127,35 @@ app.use('/presentaciones', presentacionesRoutes);
 app.use('/admin', adminRoutes);
 app.use('/reportes', reportesRoutes);
 app.use('/soporte', soporteRoutes);
+// Antes de arrancar el servidor, comprobamos la conexión a la base de datos
+const pool = require('./db');
 
-// ✅ Servidor funcionando
-const server = app.listen(PORT, HOST, () => {
-  console.log(`✅ Servidor corriendo en http://${HOST}:${PORT}`);
-});
+async function startServer() {
+  try {
+    console.log('DB: comprobando conexión al arrancar...');
+    // Hacemos una consulta simple para validar TLS/credenciales
+    await pool.query('SELECT 1');
+    console.log('DB: conexión verificada correctamente.');
+  } catch (err) {
+    console.error('DB: fallo en la comprobación al inicio. Deteniendo proceso.');
+    console.error(err && err.message ? err.message : err);
+    // Salimos con código 1 para que la plataforma marque el deploy como fallido
+    process.exit(1);
+  }
 
-server.on('close', () => {
-  console.log('🛑 Servidor detenido');
-});
+  // ✅ Servidor funcionando
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`✅ Servidor corriendo en http://${HOST}:${PORT}`);
+  });
+
+  server.on('close', () => {
+    console.log('🛑 Servidor detenido');
+  });
+
+  module.exports = server;
+}
+
+startServer();
 
 process.on('unhandledRejection', (reason) => {
   console.error('❌ Promesa rechazada no manejada:', reason);

@@ -58,30 +58,40 @@ const resolveDatabaseConfig = () => {
     }
   }
 
+  // Build connection options explicitly and only include `ssl` when it's an object.
   if (connectionString) {
-    // Do not log sensitive values; but help debugging by indicating SSL mode
-    console.log('DB config: using connectionString, ssl enabled:', Boolean(ssl));
-    if (ssl && typeof ssl === 'object') {
-      console.log('DB SSL config: rejectUnauthorized=', String(ssl.rejectUnauthorized));
+    // Do not log sensitive values; but help debugging by indicating SSL mode and masked host
+    try {
+      const masked = connectionString.replace(/(postgres(?:ql)?:\/\/)([^:@]+)(:[^@]+)?@/, '$1****:****@');
+      console.log('DB config: using connectionString, ssl enabled:', Boolean(ssl), 'conn:', masked.substring(0, 120));
+    } catch (e) {
+      console.log('DB config: using connectionString, ssl enabled:', Boolean(ssl));
     }
-    return { connectionString, ssl, ...baseConfig };
+
+    const options = { ...baseConfig, connectionString };
+    if (ssl && typeof ssl === 'object') options.ssl = ssl;
+    return options;
   }
 
   if (!process.env.PGHOST) {
     throw new Error('No se pudo inicializar la base de datos: define DATABASE_URL o las variables PGHOST/PGUSER/PGPASSWORD/PGDATABASE.');
   }
 
-  return {
+  const options = {
     host: process.env.PGHOST,
     port: Number.parseInt(process.env.PGPORT || '5432', 10),
     database: process.env.PGDATABASE,
     user: process.env.PGUSER,
     password: process.env.PGPASSWORD,
-    ssl,
     ...baseConfig,
   };
+  if (ssl && typeof ssl === 'object') options.ssl = ssl;
+  return options;
 };
 
-const pool = new Pool(resolveDatabaseConfig());
+// Create the Pool with explicit options so `ssl` is passed directly to pg client.
+const poolOptions = resolveDatabaseConfig();
+console.log('Initializing PG Pool with ssl present:', Boolean(poolOptions.ssl));
+const pool = new Pool(poolOptions);
 
 module.exports = pool;
