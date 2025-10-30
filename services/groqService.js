@@ -26,19 +26,30 @@ const insertSentenceBoundaries = (text) => {
 const formatBulletText = (text) => {
   if (!text || typeof text !== 'string') return '';
 
+  // Limpieza profunda de caracteres no deseados
   const cleanedSource = text
     .replace(/[\u2022•▪◦●]/g, ' ')
     .replace(/^[\s\-•\u2022▪◦●*\d]+[\).\-\s]*/g, '')
     .replace(/\s+/g, ' ')
+    .replace(/[""]/g, '"')  // Normalizar comillas
+    .replace(/['']/g, "'")  // Normalizar apóstrofes
+    .replace(/…/g, '...')   // Normalizar puntos suspensivos
+    .replace(/\s+([.,;:!?])/g, '$1')  // Eliminar espacios antes de puntuación
+    .replace(/([.,;:!?])([^\s])/g, '$1 $2')  // Agregar espacio después de puntuación
     .trim();
 
-  if (!cleanedSource) return '';
+  if (!cleanedSource || cleanedSource.length < 3) return '';
 
+  // Capitalizar primera letra correctamente
   const capitalized = cleanedSource.charAt(0).toUpperCase() + cleanedSource.slice(1);
   
-  const withPeriod = /[.!?…]$/.test(capitalized) ? capitalized : `${capitalized}.`;
+  // Asegurar que termina con punto (si no tiene puntuación final)
+  const withPeriod = /[.!?]$/.test(capitalized) ? capitalized : `${capitalized}.`;
   
-  return withPeriod;
+  // Verificar que no tenga doble puntuación
+  const finalText = withPeriod.replace(/\.+$/g, '.').replace(/\?+$/g, '?').replace(/!+$/g, '!');
+  
+  return finalText;
 };
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -180,6 +191,7 @@ const buildPrompt = (presentacion) => {
   const tema = presentacion.titulo || 'Presentación profesional';
   const slideCount = resolveDesiredSlideCount(presentacion);
   const detailLevel = presentacion.detailLevel || presentacion.nivel || 'Medium';
+  const idioma = presentacion.idioma || 'Español';
   
   // Mapeo de estilos visuales a estilos de escritura
   const styleMapping = {
@@ -198,52 +210,63 @@ const buildPrompt = (presentacion) => {
   const detailConfig = {
     Brief: {
       bulletCount: 3,
-      bulletWordRange: '8-12',
-      contentSentences: 2,
-      description: 'conciso y directo',
+      bulletLength: 'entre 10-15 palabras',
+      contentLength: 'un párrafo de 2-3 oraciones bien estructuradas',
+      focus: 'información esencial y directa',
     },
     Medium: {
       bulletCount: 4,
-      bulletWordRange: '10-18',
-      contentSentences: 3,
-      description: 'equilibrado y profesional',
+      bulletLength: 'entre 12-18 palabras',
+      contentLength: 'un párrafo de 3-4 oraciones coherentes',
+      focus: 'balance entre detalle y claridad',
     },
     Detailed: {
       bulletCount: 5,
-      bulletWordRange: '15-25',
-      contentSentences: 4,
-      description: 'exhaustivo y profundo',
+      bulletLength: 'entre 15-22 palabras',
+      contentLength: 'un párrafo de 4-5 oraciones completas',
+      focus: 'análisis profundo con ejemplos específicos',
     },
   };
 
   // Configuración de estilos de escritura
   const styleConfig = {
     Professional: {
-      tone: 'formal y técnico',
-      vocabulary: 'terminología profesional especializada',
-      structure: 'Usa lenguaje corporativo, datos precisos, métricas y KPIs',
-      examples: 'casos de estudio empresariales y estadísticas verificables',
+      tone: 'formal, técnico y corporativo',
+      guidelines: 'Usa terminología profesional, datos verificables, métricas concretas y lenguaje corporativo estándar. Incluye estadísticas, porcentajes y casos de éxito empresariales.',
+      structure: 'Redacta con precisión técnica y claridad ejecutiva.',
     },
     Casual: {
-      tone: 'conversacional y accesible',
-      vocabulary: 'lenguaje cotidiano y analogías simples',
-      structure: 'Usa ejemplos del día a día, preguntas retóricas y tono cercano',
-      examples: 'situaciones cotidianas y metáforas familiares',
+      tone: 'conversacional, cercano y accesible',
+      guidelines: 'Usa lenguaje cotidiano sin perder profesionalismo. Incluye analogías simples, ejemplos del día a día y un tono amigable que conecte con la audiencia.',
+      structure: 'Redacta de forma clara y directa, como si explicaras a un colega.',
     },
     Academic: {
-      tone: 'riguroso y analítico',
-      vocabulary: 'terminología científica y académica',
-      structure: 'Usa referencias conceptuales, análisis crítico y argumentación fundamentada',
-      examples: 'teorías, modelos y estudios de investigación',
+      tone: 'riguroso, analítico y científico',
+      guidelines: 'Usa terminología académica precisa, referencias a teorías consolidadas y argumentación fundamentada. Incluye conceptos, modelos y enfoques metodológicos.',
+      structure: 'Redacta con profundidad analítica y rigor científico.',
     },
   };
 
   const config = detailConfig[detailLevel] || detailConfig.Medium;
   const style = styleConfig[writingStyle] || styleConfig.Professional;
 
-  return `Genera una lista de diapositivas sobre el siguiente tema en formato JSON válido y altamente informativo.
+  // Instrucciones específicas por idioma
+  const languageInstructions = {
+    'Español': 'Redacta en español perfecto con gramática impecable, acentos correctos y concordancia verbal precisa.',
+    'English': 'Write in perfect English with impeccable grammar, proper punctuation and clear sentence structure.',
+    'French': 'Rédigez en français parfait avec une grammaire impeccable, des accents corrects et une structure claire.',
+  };
 
-Estructura exacta:
+  const langInstruction = languageInstructions[idioma] || languageInstructions['Español'];
+
+  return `Eres un experto creador de contenido profesional para presentaciones. Genera contenido de ALTA CALIDAD sobre el siguiente tema en formato JSON válido.
+
+**TEMA:** ${tema}
+**IDIOMA:** ${idioma}
+**NIVEL DE DETALLE:** ${detailLevel}
+**ESTILO:** ${writingStyle}
+
+**FORMATO JSON REQUERIDO:**
 {
   "slides": [
     {
@@ -254,24 +277,60 @@ Estructura exacta:
   ]
 }
 
-Instrucciones estrictas:
-- El array "slides" debe contener EXACTAMENTE ${slideCount} elementos, ni más ni menos.
-- No agregues comentarios, encabezados ni texto fuera del JSON solicitado.
-- Usa comillas dobles y asegura que el JSON sea válido.
-- Cada "titulo" debe ser breve (máximo 8 palabras) y descriptivo.
-- Cada lista "bullets" debe tener exactamente ${config.bulletCount} entradas entre ${config.bulletWordRange} palabras, incluir datos concretos, beneficios medibles o pasos accionables, iniciar con verbos distintos y evitar conectores genéricos.
-- El campo "contenido" debe contener un párrafo de ${config.contentSentences} oraciones que resuma el contexto, profundice en los bullets e incluya ejemplos específicos.
-- El tono debe ser ${config.description}.
-- No repitas texto entre los bullets ni con el título y evita frases vacías como "importante" o "muy útil".
-- Mantén coherencia con el idioma del tema.
+**INSTRUCCIONES DE CALIDAD (CRÍTICO):**
 
-ESTILO DE ESCRITURA: ${writingStyle}
-- Tono: ${style.tone}
-- Vocabulario: ${style.vocabulary}
-- Estructura: ${style.structure}
-- Ejemplos: ${style.examples}
+1. **CANTIDAD:** Genera EXACTAMENTE ${slideCount} diapositivas, ni más ni menos.
 
-Tema: ${tema}`;
+2. **IDIOMA Y GRAMÁTICA:** ${langInstruction}
+   - CERO errores ortográficos
+   - CERO errores de puntuación
+   - CERO errores de concordancia
+   - Verifica cada palabra antes de incluirla
+
+3. **TÍTULOS (máximo 8 palabras):**
+   - Claros, específicos y descriptivos
+   - Sin artículos innecesarios al inicio
+   - Primera letra mayúscula, resto en minúscula (excepto nombres propios)
+   - Ejemplo bueno: "Beneficios de la inteligencia artificial"
+   - Ejemplo malo: "La IA es muy buena"
+
+4. **BULLETS (exactamente ${config.bulletCount} por slide, ${config.bulletLength}):**
+   - Cada bullet debe aportar información ÚNICA y VALIOSA
+   - Inicia con verbos de acción variados o sustantivos concretos
+   - Incluye datos específicos, cifras o ejemplos tangibles
+   - NO repitas conceptos entre bullets
+   - NO uses frases genéricas como "es importante", "muy útil", "fundamental"
+   - Mantén estructura paralela (todos empiezan similar)
+   - ${style.guidelines}
+
+5. **CONTENIDO (${config.contentLength}):**
+   - Desarrolla y profundiza los puntos de los bullets
+   - Conecta las ideas con fluidez y coherencia
+   - Incluye contexto, razones o ejemplos concretos
+   - Usa conectores apropiados entre oraciones
+   - ${config.focus}
+   - Cada oración debe tener sentido completo
+
+6. **ESTILO DE REDACCIÓN:**
+   - Tono: ${style.tone}
+   - ${style.structure}
+   - Evita repeticiones innecesarias
+   - Usa vocabulario preciso y variado
+   - Mantén consistencia en tiempos verbales
+
+7. **VALIDACIÓN FINAL:**
+   - Lee cada texto completo antes de incluirlo
+   - Verifica que cada bullet agregue valor real
+   - Asegura que el contenido fluye naturalmente
+   - Confirma ortografía y gramática perfectas
+
+**IMPORTANTE:** 
+- Responde ÚNICAMENTE con el JSON válido, sin texto adicional
+- Usa comillas dobles para todas las strings
+- No incluyas comentarios ni explicaciones fuera del JSON
+- Cada slide debe ser informativa y profesional
+
+Genera ahora el contenido siguiendo TODAS estas instrucciones con máxima calidad.`;
 };
 
 const dedupeBullets = (bullets) => {
@@ -409,16 +468,28 @@ const parseSlides = (rawContent) => {
 
       const rawTitle = slide.titulo || slide.title || slide.heading;
       const title = rawTitle && typeof rawTitle === 'string'
-        ? rawTitle.replace(/\s+/g, ' ').trim()
+        ? rawTitle.replace(/\s+/g, ' ').replace(/[""]/g, '"').trim()
         : `Sección ${index + 1}`;
 
       const bullets = toBulletArray(slide.bullets || slide.puntos || slide.items || slide.lines);
       const rawContent = slide.contenido || slide.content || slide.descripcion || slide.resumen || '';
+      
+      // Limpiar el contenido de caracteres problemáticos
+      const cleanContent = typeof rawContent === 'string' 
+        ? rawContent
+            .replace(/[""]/g, '"')
+            .replace(/['']/g, "'")
+            .replace(/…/g, '...')
+            .replace(/\s+/g, ' ')
+            .replace(/\s+([.,;:!?])/g, '$1')
+            .replace(/([.,;:!?])([^\s])/g, '$1 $2')
+            .trim()
+        : '';
 
       return {
         title,
         bullets,
-        content: rawContent,
+        content: cleanContent,
       };
     })
     .filter(Boolean);
