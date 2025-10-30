@@ -26,6 +26,38 @@ const resolveDatabaseConfig = () => {
   // Detect if the connection string explicitly requests SSL (e.g. ?sslmode=require)
   const connectionStringRequiresSsl = typeof connectionString === 'string' && /ssl(mode)?=(require|verify-ca|verify-full)|\bssl=true\b/i.test(connectionString);
 
+  // Quick override: if the operator set DATABASE_SSL_ALLOW_SELF_SIGNED=true we force
+  // a permissive SSL config (rejectUnauthorized: false). This is a deliberate
+  // operational escape hatch for environments where the CA isn't available yet.
+  // WARNING: insecure for long-term use. Prefer DATABASE_SSL_CA_B64 or DATABASE_SSL_CA.
+  const allowSelfSignedGlobal = String(process.env.DATABASE_SSL_ALLOW_SELF_SIGNED || 'false').toLowerCase() === 'true';
+  if (allowSelfSignedGlobal) {
+    const sslOption = { rejectUnauthorized: false };
+    try {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    } catch (e) {
+      // ignore
+    }
+
+    if (connectionString) {
+      console.log('DB: DATABASE_SSL_ALLOW_SELF_SIGNED=true -> using connectionString with ssl.rejectUnauthorized=false');
+      const options = { ...baseConfig, connectionString, ssl: sslOption };
+      return options;
+    }
+
+    console.log('DB: DATABASE_SSL_ALLOW_SELF_SIGNED=true -> using host/port config with ssl.rejectUnauthorized=false');
+    const options = {
+      host: process.env.PGHOST,
+      port: Number.parseInt(process.env.PGPORT || '5432', 10),
+      database: process.env.PGDATABASE,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      ...baseConfig,
+      ssl: sslOption,
+    };
+    return options;
+  }
+
   // SSL options: allow providing a CA PEM via DATABASE_SSL_CA (either the PEM text or a path)
   // or allow self-signed certs when DATABASE_SSL_ALLOW_SELF_SIGNED=true
   let ssl = false;
