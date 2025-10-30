@@ -79,7 +79,7 @@ GOOGLE_CLIENT_SECRET=<client_secret>
 GOOGLE_CALLBACK_URL=https://<tu-backend>/auth/google/callback
 
 GROQ_API_KEY=<opcional>
-GEMINI_API_KEY=AIzaSyDlr0qbgPS3o3ygYi1FzSDJnhhjbxPghKs
+GEMINI_API_KEY=<tu_gemini_api_key>
 GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
 GEMINI_IMAGE_MODEL_FALLBACK=gemini-2.5-flash-image
 MAINTENANCE_GATE_SECRET=<opcional>
@@ -89,6 +89,7 @@ SUPPORT_EMAIL=soporte@tu-dominio.com
 **Notas importantes:**
 - Ajusta `PGPOOL_MAX` según el límite de conexiones de tu Postgres (planes pequeños: 2–5).
 - `ALLOWED_ORIGINS` controla qué dominios pueden consumir el backend.
+- `GEMINI_API_KEY`: Obtén tu clave en [Google AI Studio](https://aistudio.google.com/apikey). **IMPORTANTE: Nunca compartas ni subas esta clave al repositorio.**
 - `GEMINI_IMAGE_MODEL` define el modelo principal para generar imágenes (por defecto: `gemini-2.0-flash-preview-image-generation` con límites de **1K RPM, 1M TPM, 10K RPD**).
 - `GEMINI_IMAGE_MODEL_FALLBACK` define el modelo de respaldo que se usa automáticamente si el principal falla (por defecto: `gemini-2.5-flash-image`). El sistema cambia automáticamente al fallback si detecta errores 400, 403, 404 o mensajes "not found", "unsupported", "deprecated".
 - Todos los secretos (JWT, sesión, OAuth, Groq, Gemini) deben generarse en tus propias cuentas; **nunca compartas ni subas los valores reales al repositorio**.
