@@ -22,10 +22,13 @@ const resolveDatabaseConfig = () => {
 
   const connectionString = process.env.DATABASE_URL;
 
+  // Detect if the connection string explicitly requests SSL (e.g. ?sslmode=require)
+  const connectionStringRequiresSsl = typeof connectionString === 'string' && /ssl(mode)?=(require|verify-ca|verify-full)|\bssl=true\b/i.test(connectionString);
+
   // SSL options: allow providing a CA PEM via DATABASE_SSL_CA (either the PEM text or a path)
   // or allow self-signed certs when DATABASE_SSL_ALLOW_SELF_SIGNED=true
   let ssl = false;
-  if (shouldForceSsl) {
+  if (shouldForceSsl || connectionStringRequiresSsl) {
     const allowSelfSigned = String(process.env.DATABASE_SSL_ALLOW_SELF_SIGNED || 'false').toLowerCase() === 'true';
     const rawCa = process.env.DATABASE_SSL_CA; // optional: PEM string or path to file
     if (rawCa) {
