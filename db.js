@@ -43,12 +43,20 @@ const resolveDatabaseConfig = () => {
       }
     }
 
-    // If no env provided, check for a local cert shipped with the app at ./certs/do-certs.pem
+    // If no env provided, check for common local cert filenames (prefer user's exact name)
     if (!rawCa) {
-      const defaultCaPath = path.join(__dirname, 'certs', 'do-certs.pem');
-      if (fs.existsSync(defaultCaPath)) {
-        rawCa = defaultCaPath;
-        console.log('DB: using local CA file at', defaultCaPath);
+      const candidatePaths = [
+        path.join(__dirname, 'certs', 'ca-certificate.crt'),
+        path.join(__dirname, 'ca-certificate.crt'),
+        path.join(__dirname, 'certs', 'do-certs.pem'),
+        path.join(__dirname, 'certs', 'do-certs.pem'),
+      ];
+      for (const p of candidatePaths) {
+        if (fs.existsSync(p)) {
+          rawCa = p;
+          console.log('DB: using local CA file at', p);
+          break;
+        }
       }
     }
 
