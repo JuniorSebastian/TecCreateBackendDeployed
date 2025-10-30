@@ -5,9 +5,23 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 
 // Inicio login con Google
-router.get('/google', passport.authenticate('google', {
-  scope: ['profile', 'email'],
-}));
+// Construimos manualmente la URL de autorización de Google para asegurar
+// que `redirect_uri` sea exactamente la variable de entorno esperada
+// (sin parámetros extra ni modificaciones).
+router.get('/google', (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || process.env.GOOGLE_CALLBACK_URL;
+
+  if (!clientId || !redirectUri) {
+    return res.status(500).json({ error: 'Google OAuth no está configurado correctamente.' });
+  }
+
+  const encodedClientId = encodeURIComponent(clientId);
+  const encodedRedirect = encodeURIComponent(redirectUri);
+  // Solo los parámetros obligatorios solicitados por el usuario
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodedClientId}&redirect_uri=${encodedRedirect}&response_type=code&scope=openid%20email%20profile`;
+  return res.redirect(authUrl);
+});
 
 // Callback de Google
 router.get('/google/callback', (req, res, next) => {

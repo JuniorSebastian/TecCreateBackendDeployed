@@ -37,7 +37,7 @@ services:
       - key: ADMIN_EMAILS
         sync: false
       - key: PUBLIC_BASE_URL
-        value: https://presentador-ia-backend.onrender.com
+        value: https://teccreate-f6g5r.ondigitalocean.app
       - key: ALLOWED_ORIGINS
         sync: false
       - key: SESSION_MAX_AGE

@@ -13,7 +13,8 @@ const ADMIN_EMAILS = process.env.ADMIN_EMAILS
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_CALLBACK_URL
+  // Prefer `GOOGLE_REDIRECT_URI` (requested name). Fall back to `GOOGLE_CALLBACK_URL` for compatibility.
+  callbackURL: process.env.GOOGLE_REDIRECT_URI || process.env.GOOGLE_CALLBACK_URL
 }, async (accessToken, refreshToken, profile, done) => {
   const email = profile.emails[0].value.toLowerCase();
   const nombre = profile.displayName;

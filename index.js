@@ -43,7 +43,7 @@ if (!isProduction) {
     .forEach((origin) => defaultAllowedOrigins.add(origin));
 }
 
-[process.env.CLIENT_URL, process.env.RENDER_EXTERNAL_URL, process.env.PUBLIC_BASE_URL]
+[process.env.CLIENT_URL, process.env.PUBLIC_BASE_URL]
   .map(normalizeOrigin)
   .filter(Boolean)
   .forEach((origin) => defaultAllowedOrigins.add(origin));
@@ -107,7 +107,7 @@ app.use(session(sessionConfig));
 app.use(passport.initialize());
 app.use(passport.session());
 
-// 🔍 Healthcheck para Render
+// 🔍 Healthcheck
 app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });

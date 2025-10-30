@@ -142,22 +142,22 @@ Deberías obtener `{ "status": "ok" }`.
 6. **Configurar OAuth de Google** siguiendo la sección [OAuth con Google](#oauth-con-google). Verifica que el `redirect_uri` coincida con tu dominio.
 7. **Verificar claves IA** (opcional) creando `GROQ_API_KEY` y `GEMINI_API_KEY`.
 
-### 2A. Desplegar con Render (automatizado)
+### 2A. Despliegue con proveedor (Blueprint opcional)
 
-1. **Verificar `render.yaml`**: confirma que el archivo está en la raíz del backend y contiene el servicio web y la base de datos.
-2. **Crear Blueprint** en Render:
-  - Render → Deploy → New Blueprint → conecta el repositorio.
-  - Render detectará `render.yaml` y sugerirá los recursos.
+1. **Verificar `render.yaml`** (opcional): si tu proveedor soporta blueprints/manifests, confirma que el archivo esté en la raíz y contenga el servicio web y la base de datos.
+2. **Crear Blueprint / Conectar repo** en tu proveedor de hosting:
+  - Conecta el repositorio y aplica el manifest (si aplica).
+  - El proveedor detectará `render.yaml` y sugerirá recursos si soporta este método.
 3. **Revisar variables de entorno**:
-  - Render marca con `sync: false` las variables que debes completar manualmente (CLIENT_URL, OAuth, IA, etc.).
-  - Usa el botón **Generate** para `SESSION_SECRET` y `JWT_SECRET` o pega valores propios.
-4. **Deploy**: Render instalará dependencias y ejecutará `npm run start` (definido en el blueprint).
+  - El panel de tu proveedor mostrará las variables que debes completar manualmente (CLIENT_URL, OAuth, IA, etc.).
+  - Usa cualquier herramienta del proveedor para generar `SESSION_SECRET` y `JWT_SECRET` o pega valores propios.
+4. **Deploy**: el proveedor instalará dependencias y ejecutará `npm run start` (definido en el blueprint o manifest).
 5. **Probar salud**:
   ```bash
-  curl https://<tu-servicio>.onrender.com/healthz
+  curl https://<tu-servicio>/healthz
   ```
 6. **Configurar dominio personalizado** (opcional): actualiza `PUBLIC_BASE_URL` y agrega el dominio a `ALLOWED_ORIGINS`.
-7. **Supervisar logs**: en Render → Logs confirma que Express se levantó y la conexión a Postgres fue exitosa.
+7. **Supervisar logs**: en el panel de tu proveedor revisa que Express se levantó y la conexión a Postgres fue exitosa.
 
 ### 2B. Desplegar en servidor privado / instituto (manual)
 
@@ -208,7 +208,7 @@ Deberías obtener `{ "status": "ok" }`.
 
 ## Despliegue
 
-### Render (Blueprint incluido)
+### Blueprint (opcional)
 
 1. Asegúrate de que `render.yaml` esté en la raíz.
 2. En Render → Deploy → New Blueprint → selecciona el repo.
@@ -216,8 +216,8 @@ Deberías obtener `{ "status": "ok" }`.
    - Servicio web Node con comando `npm run start`.
    - Base de datos Postgres (plan free) si la plantilla lo especifica.
 4. Completa las variables marcadas con `sync: false` (CLIENT_URL, OAuth, IA, etc.).
-5. Render puede generar `SESSION_SECRET` y `JWT_SECRET` (usa la opción "Generate").
-6. Tras el deploy, visita `https://<servicio>.onrender.com/healthz`.
+5. El proveedor puede generar `SESSION_SECRET` y `JWT_SECRET` (usa la opción "Generate").
+6. Tras el deploy, visita `https://<servicio>/healthz`.
 7. Si conectas un dominio propio, agrega la URL a `ALLOWED_ORIGINS` y actualiza `PUBLIC_BASE_URL`.
 
 ### Servidor propio / on-premise
@@ -430,8 +430,8 @@ Ejemplo de uso:
 
 ## Salud, CORS y sesiones
 
-- Healthcheck: `GET /healthz` → usado por Render u orquestadores.
-- CORS: se valida contra `CLIENT_URL`, `PUBLIC_BASE_URL`, `RENDER_EXTERNAL_URL` y `ALLOWED_ORIGINS` (se normalizan URLs).
+- Healthcheck: `GET /healthz` → usado por orquestadores (DigitalOcean, otros).
+- CORS: se valida contra `CLIENT_URL`, `PUBLIC_BASE_URL` y `ALLOWED_ORIGINS` (se normalizan URLs).
 - Sesiones: `express-session` con cookies `httpOnly`, `secure` y `sameSite=none` en producción. Para múltiples instancias, considera Redis u otro store.
 
 ## Solución de problemas
@@ -447,7 +447,7 @@ Ejemplo de uso:
 
 - `docs/Backend-Manual.md`: guía técnica completa (infraestructura, despliegue, endpoints, seguridad).
 - `docs/Manual-Usuario-Backend.md`: guía operativa para profesores, soporte y usuarios (funcionalidades, pasos y ejemplos de API).
-- `render.yaml`: blueprint listo para Render (servicio web + Postgres + variables clave).
+- `render.yaml`: blueprint/manifest opcional (servicio web + Postgres + variables clave). Adáptalo a tu proveedor.
 - `estructura_presentador_ia.sql`: script de creación y actualización del esquema de base de datos.
 
 ---

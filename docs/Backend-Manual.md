@@ -1,6 +1,6 @@
 # TecCreate Backend – Manual de Usuario (Completo)
 
-Backend en Node.js/Express con PostgreSQL, OAuth2 (Google), generación de presentaciones con IA (Groq) e imágenes (Gemini), y exportación a PPTX. Este documento sirve como guía integral para configurar, desplegar, operar y mantener el servicio, tanto en Render como en servidores propios.
+Backend en Node.js/Express con PostgreSQL, OAuth2 (Google), generación de presentaciones con IA (Groq) e imágenes (Gemini), y exportación a PPTX. Este documento sirve como guía integral para configurar, desplegar, operar y mantener el servicio en tu proveedor de hosting o en servidores propios.
 
 ## 1. Vista general
 
@@ -83,10 +83,10 @@ Comprueba `http://localhost:3001/healthz`.
 
 ## 7. Despliegue
 
-### 7.1 Render (Blueprint incluido)
+### 7.1 Blueprint (opcional)
 
-- Se incluye `render.yaml` con servicio web y base Postgres de ejemplo. Crear un Blueprint en Render y completar variables de entorno.
-- Añade tus claves sensibles (CLIENT_URL, Google, IA) desde el panel de Render.
+- Se incluye `render.yaml` como ejemplo de blueprint/manifest para la creación automatizada del servicio. Adáptalo al proveedor que uses y completa las variables de entorno desde el panel del proveedor.
+- Añade tus claves sensibles (CLIENT_URL, Google, IA) desde el panel del proveedor de hosting.
 - Visita `/healthz` para validar disponibilidad.
 
 ### 7.2 Servidor propio (on‑premise)
@@ -174,7 +174,7 @@ Rutas protegidas requieren `Authorization: Bearer <token>` y rol adecuado.
 ## 13. Seguridad y buenas prácticas
 
 - Mantén secretos fuera del repo (usa gestores de secretos o variables del sistema).
-- Habilita HTTPS en el reverse proxy (Nginx/Traefik) o en la plataforma (Render).
+- Habilita HTTPS en el reverse proxy (Nginx/Traefik) o en la plataforma de hosting.
 - Define `ALLOWED_ORIGINS` correctamente para CORS.
 - Usa `PGPOOL_MAX` acorde al límite de conexiones de tu base.
 - Considera un store de sesión persistente (Redis) si habrá múltiples instancias.
@@ -190,7 +190,7 @@ Rutas protegidas requieren `Authorization: Bearer <token>` y rol adecuado.
 ## 15. Scripts útiles
 
 - `npm start` → inicia el servidor.
-- `render.yaml` → blueprint para Render (servicio web + Postgres + env vars).
+- `render.yaml` → blueprint/manifest opcional (servicio web + Postgres + env vars). Adáptalo a tu proveedor.
 - Carpeta `scripts/` → utilidades de soporte (listar, seed, tests de middleware).
 
 ## 16. Licencia y autores

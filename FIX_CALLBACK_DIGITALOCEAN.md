@@ -38,7 +38,10 @@ GOOGLE_CALLBACK_URL=https://teccreate-f6g5r.ondigitalocean.app/auth/google/callb
 # URLs de producción
 CLIENT_URL=https://tec-create-fronted-deployed.vercel.app
 PUBLIC_BASE_URL=https://teccreate-f6g5r.ondigitalocean.app
-ALLOWED_ORIGINS=https://tec-create-fronted-deployed.vercel.app,https://teccreate-f6g5r.ondigitalocean.app
+Google está redirigiendo a (ejemplo de URL antigua que debes quitar):
+```
+https://teccreatebackenddeployed.onrender.com/auth/google/callback
+```
 
 # Google OAuth ⚠️ CRÍTICO
 GOOGLE_CLIENT_ID=<tu_google_client_id>
@@ -48,8 +51,9 @@ GOOGLE_CALLBACK_URL=https://teccreate-f6g5r.ondigitalocean.app/auth/google/callb
 # Base de datos
 DATABASE_URL=<tu_postgresql_url>
 DATABASE_SSL=true
-PGPOOL_MAX=2
-PGPOOL_CONNECTION_TIMEOUT=5000
+❌ INCORRECTO (lo que tienes):
+GOOGLE_CALLBACK_URL=https://teccreatebackenddeployed.onrender.com/auth/google/callback
+
 PGPOOL_IDLE_TIMEOUT=10000
 
 # APIs de IA
@@ -99,11 +103,20 @@ Ve a: https://console.cloud.google.com/apis/credentials
 2. http://localhost:3001/auth/google/callback (para desarrollo local)
 ```
 
-**Authorized JavaScript origins (DEJA SOLO):**
+**ELIMINAR (si están):**
+```
+URLs antiguas de Render u otros despliegues que ya no uses. Ejemplos comunes:
+- https://teccreatebackenddeployed.onrender.com/auth/google/callback
+- https://teccreate-backend.onrender.com/auth/google/callback
+- https://teccreatebackendnodejs.onrender.com/auth/google/callback
+- https://teccreatebd-backend-final.onrender.com/auth/google/callback
+```
+
+**DEJA SOLO (ejemplos válidos):**
 ```
 ✅ MANTENER:
-1. https://tec-create-fronted-deployed.vercel.app
-2. https://teccreate-f6g5r.ondigitalocean.app
+1. https://teccreate-f6g5r.ondigitalocean.app/auth/google/callback
+2. http://localhost:3001/auth/google/callback (para desarrollo local)
 ```
 
 ## 🧪 Prueba Final:
@@ -128,12 +141,6 @@ Después de actualizar TODO:
 
 ## 📋 Checklist CRÍTICO:
 
-- [ ] ✅ Variable `GOOGLE_CALLBACK_URL` en DigitalOcean apunta a DigitalOcean (NO Render)
-- [ ] ✅ DigitalOcean redeployado después del cambio
-- [ ] ✅ Google Console SOLO tiene URIs de DigitalOcean + localhost
-- [ ] ✅ Todos los URIs de Render eliminados de Google Console
-- [ ] ✅ Frontend redeployado en Vercel (paso anterior)
-- [ ] ✅ Probado en ventana incógnito
 
 ## ⚡ ORDEN DE ACCIONES:
 
@@ -143,6 +150,5 @@ Después de actualizar TODO:
 4. **ESPERA**: 5 minutos que Google aplique cambios
 5. **PRUEBA**: Login en incógnito
 
----
 
 **El backend en Render ya NO existe. Google no debe saber NADA de Render. Solo DigitalOcean + Vercel.**
