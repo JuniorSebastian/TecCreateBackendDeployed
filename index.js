@@ -95,8 +95,19 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // 🔌 Middleware para JSON
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Limit request body size to avoid OOM from large payloads; can be overridden with BODY_LIMIT env
+app.use(express.json({ limit: process.env.BODY_LIMIT || '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: process.env.BODY_LIMIT || '100kb' }));
+
+// Minimal request logging (non-intrusive). If pino is available, it will log too.
+app.use((req, res, next) => {
+  try {
+    console.log(`[req] ${req.method} ${req.originalUrl}`);
+  } catch (e) {
+    // ignore logging errors
+  }
+  return next();
+});
 
 // 📁 Archivos estáticos (imágenes generadas y otros recursos)
 const STATIC_PUBLIC_DIR = path.join(__dirname, 'public');
@@ -248,6 +259,17 @@ process.on('unhandledRejection', (reason) => {
 
 process.on('uncaughtException', (err) => {
   console.error('❌ Excepción no capturada:', err);
+});
+
+// Global error handler (last middleware) — captura errores no manejados en rutas
+app.use((err, req, res, next) => {
+  try {
+    console.error('Global error handler caught:', err && err.stack ? err.stack : err);
+  } catch (e) {
+    // ignore
+  }
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'internal_server_error' });
 });
 
 setInterval(() => {}, 60_000);
