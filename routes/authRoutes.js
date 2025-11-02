@@ -155,10 +155,24 @@ router.get('/google/callback', async (req, res) => {
 
       const token = jwt.sign({ id: user.id, nombre: user.nombre, email: user.email, foto: user.foto, rol: (user.rol || 'usuario').toLowerCase(), estado: user.estado || 'activo' }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
 
-      const roleRedirects = { admin: '/admin', soporte: '/soporte', usuario: '/perfil' };
-      const redirectPath = roleRedirects[(user.rol || 'usuario').toLowerCase()] || roleRedirects.usuario;
+      // Mapeo seguro de roles a rutas públicas del frontend.
+      // Ajusta estas rutas si tu frontend usa nombres distintos (ej: admin -> /admindashboard)
+      const roleRedirects = { admin: '/admindashboard', soporte: '/soporte', usuario: '/perfil' };
+      const defaultRedirect = roleRedirects.usuario;
+      const requestedRole = (user.rol || 'usuario').toLowerCase();
+      let redirectPath = roleRedirects[requestedRole] || defaultRedirect;
 
-      const redirectUrl = `${process.env.CLIENT_URL}/oauth-success?token=${token}&user=${encodeURIComponent(JSON.stringify({ id: user.id, nombre: user.nombre, email: user.email }))}&redirect=${encodeURIComponent(redirectPath)}`;
+      // Allowlist: acepta rutas predefinidas o las definidas en ALLOWED_REDIRECT_PATHS env (coma-separadas)
+      const envAllowed = (process.env.ALLOWED_REDIRECT_PATHS || '').split(',').map(s => s.trim()).filter(Boolean);
+      const allowedPaths = new Set([...Object.values(roleRedirects), ...envAllowed]);
+      if (!allowedPaths.has(redirectPath)) {
+        redirectPath = defaultRedirect;
+      }
+
+      // Incluimos campos mínimos y seguros del usuario para el frontend
+      const safeUser = { id: user.id, nombre: user.nombre, email: user.email, rol: (user.rol || 'usuario').toLowerCase(), foto: user.foto || null, estado: user.estado || 'activo' };
+
+      const redirectUrl = `${process.env.CLIENT_URL}/oauth-success?token=${token}&user=${encodeURIComponent(JSON.stringify(safeUser))}&redirect=${encodeURIComponent(redirectPath)}`;
       console.log('Login exitoso, redirigiendo a frontend:', redirectUrl);
       return res.redirect(redirectUrl);
     } catch (dbErr) {
@@ -187,7 +201,10 @@ router.get('/google/callback', async (req, res) => {
 
         const token = jwt.sign(fallbackPayload, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: process.env.JWT_EXPIRES_IN || '1h' });
 
-        const redirectUrl = `${process.env.CLIENT_URL}/oauth-success?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify({ nombre: fallbackPayload.nombre, email: fallbackPayload.email }))}&redirect=${encodeURIComponent(isAdmin ? '/admin' : '/perfil')}&note=db_offline`;
+  // Use same role->path mapping for degraded flow
+  const degradedRedirect = isAdmin ? roleRedirects.admin || '/admindashboard' : (isSupport ? roleRedirects.soporte || '/soporte' : roleRedirects.usuario || '/perfil');
+  const safeFallbackUser = { nombre: fallbackPayload.nombre, email: fallbackPayload.email, rol: fallbackPayload.rol, estado: fallbackPayload.estado };
+  const redirectUrl = `${process.env.CLIENT_URL}/oauth-success?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify(safeFallbackUser))}&redirect=${encodeURIComponent(degradedRedirect)}&note=db_offline`;
         console.warn('Degraded login successful, redirecting frontend with temporary token:', redirectUrl);
         return res.redirect(redirectUrl);
       } catch (signErr) {
