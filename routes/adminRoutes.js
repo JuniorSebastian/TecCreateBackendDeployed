@@ -13,13 +13,15 @@ const {
 	obtenerCatalogosUsuarios,
 } = require('../controllers/usuariosAdminController');
 
-router.get('/usuarios/catalogos', verificarToken, verificarEstado, verificarRol(['admin']), obtenerCatalogosUsuarios);
-router.get('/usuarios', verificarToken, verificarEstado, verificarRol(['admin']), listarUsuarios);
-router.get('/usuarios/:id', verificarToken, verificarEstado, verificarRol(['admin']), obtenerUsuarioDetalle);
-router.get('/usuarios/:id/presentaciones', verificarToken, verificarEstado, verificarRol(['admin']), listarPresentacionesDeUsuario);
-router.patch('/usuarios/:id/rol', verificarToken, verificarEstado, verificarRol(['admin']), actualizarRolUsuario);
-router.patch('/usuarios/:id/estado', verificarToken, verificarEstado, verificarRol(['admin', 'soporte']), actualizarEstadoUsuario);
-router.delete('/usuarios/:id', verificarToken, verificarEstado, verificarRol(['admin']), eliminarUsuario);
-router.get('/dashboard/resumen', verificarToken, verificarEstado, verificarRol(['admin']), obtenerDashboardResumen);
+const asyncHandler = require('../utils/asyncHandler');
+
+router.get('/usuarios/catalogos', verificarToken, verificarEstado, verificarRol(['admin']), asyncHandler(obtenerCatalogosUsuarios));
+router.get('/usuarios', verificarToken, verificarEstado, verificarRol(['admin']), asyncHandler(listarUsuarios));
+router.get('/usuarios/:id', verificarToken, verificarEstado, verificarRol(['admin']), asyncHandler(obtenerUsuarioDetalle));
+router.get('/usuarios/:id/presentaciones', verificarToken, verificarEstado, verificarRol(['admin']), asyncHandler(listarPresentacionesDeUsuario));
+router.patch('/usuarios/:id/rol', verificarToken, verificarEstado, verificarRol(['admin']), asyncHandler(actualizarRolUsuario));
+router.patch('/usuarios/:id/estado', verificarToken, verificarEstado, verificarRol(['admin', 'soporte']), asyncHandler(actualizarEstadoUsuario));
+router.delete('/usuarios/:id', verificarToken, verificarEstado, verificarRol(['admin']), asyncHandler(eliminarUsuario));
+router.get('/dashboard/resumen', verificarToken, verificarEstado, verificarRol(['admin']), asyncHandler(obtenerDashboardResumen));
 
 module.exports = router;

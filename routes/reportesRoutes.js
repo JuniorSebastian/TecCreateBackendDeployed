@@ -16,13 +16,15 @@ const {
   eliminarReporteSoporte,
 } = require('../controllers/reportesController');
 
+const asyncHandler = require('../utils/asyncHandler');
+
 const router = express.Router();
 
-router.get('/categorias', obtenerCategoriasReportes);
-router.get('/estados', verificarToken, verificarEstado, verificarRol(['admin', 'soporte']), obtenerEstadosReportes);
-router.post('/', intentarAdjuntarUsuario, parseFormData, crearReporteSoporte);
-router.get('/', verificarToken, verificarEstado, verificarRol(['admin', 'soporte']), listarReportesSoporte);
-router.patch('/:id', verificarToken, verificarEstado, verificarRol(['admin', 'soporte']), actualizarEstadoReporte);
-router.delete('/:id', verificarToken, verificarEstado, verificarRol(['admin']), eliminarReporteSoporte);
+router.get('/categorias', asyncHandler(obtenerCategoriasReportes));
+router.get('/estados', verificarToken, verificarEstado, verificarRol(['admin', 'soporte']), asyncHandler(obtenerEstadosReportes));
+router.post('/', intentarAdjuntarUsuario, parseFormData, asyncHandler(crearReporteSoporte));
+router.get('/', verificarToken, verificarEstado, verificarRol(['admin', 'soporte']), asyncHandler(listarReportesSoporte));
+router.patch('/:id', verificarToken, verificarEstado, verificarRol(['admin', 'soporte']), asyncHandler(actualizarEstadoReporte));
+router.delete('/:id', verificarToken, verificarEstado, verificarRol(['admin']), asyncHandler(eliminarReporteSoporte));
 
 module.exports = router;

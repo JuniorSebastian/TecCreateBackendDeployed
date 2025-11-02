@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../database');
 const { getMaintenanceGateInfo } = require('../services/maintenanceService');
 const router = express.Router();
+const asyncHandler = require('../utils/asyncHandler');
 
 // Inicio login con Google
 // Construimos manualmente la URL de autorización de Google para asegurar
@@ -26,7 +27,7 @@ router.get('/google', (req, res) => {
 });
 
 // Callback de Google
-router.get('/google/callback', async (req, res) => {
+router.get('/google/callback', asyncHandler(async (req, res) => {
   // Helper to send structured errors: JSON when requested, or redirect to frontend /oauth-error
   const sendError = (errorCode, message, status = 400) => {
     console.error('OAuth callback error:', errorCode, message);
@@ -213,8 +214,8 @@ router.get('/google/callback', async (req, res) => {
       }
     }
   } catch (ex) {
-    return sendError('unexpected_error', `Unexpected error: ${String(ex && ex.message ? ex.message : ex)}`, 500);
-  }
-});
+      return sendError('unexpected_error', `Unexpected error: ${String(ex && ex.message ? ex.message : ex)}`, 500);
+    }
+  }));
 
 module.exports = router;
