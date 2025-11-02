@@ -50,6 +50,16 @@ Backend en Node.js/Express para generar presentaciones asistidas por IA, integra
 - Proyecto OAuth en Google Cloud con redirect URI configurado.
 - (Opcional) API keys de Groq y Gemini.
 
+## Buenas prácticas aplicadas en este repo
+
+- Nunca versionar archivos con secretos (usa `.env` y `.env.example`).
+- Añadimos `.gitignore` para evitar subir `node_modules`, certificados, logs y archivos temporales.
+- Documentamos variables de entorno en `.env.example` para facilitar deploys reproducibles.
+- Se creó una rama `cleanup/remove-tests` con artefactos locales de prueba removidos. Mantén las ramas de limpieza y revisiones antes de merge.
+- El servidor hace un `waitForDb()` al arrancar para evitar fallos por dependencias no listas.
+
+Si quieres que habilite linting automático (ESLint) o un workflow de CI (GitHub Actions) para checks automáticos, dímelo y lo preparo: añadiré la configuración y los scripts (requiere instalar dependencias o crear el workflow). 
+
 ## Variables de entorno
 
 Defínelas en tu `.env`, en Render o en tu gestor de secretos. Sustituye `<...>` por tus datos reales.

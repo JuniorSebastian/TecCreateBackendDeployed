@@ -4,9 +4,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "start:prod": "node index.js",
+    "start:prod": "NODE_ENV=production node index.js",
     "render-build": "npm install",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "echo \"Install eslint and run: npx eslint . --ext .js\"",
+    "test": "echo \"No unit tests configured. Add tests in /test and update package.json\" && exit 0"
   },
   "keywords": [],
   "author": "",
