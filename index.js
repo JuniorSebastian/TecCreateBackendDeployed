@@ -5,11 +5,30 @@ const session = require('express-session');
 const cors = require('cors');
 const passport = require('passport');
 require('./config/passport'); // Configura la estrategia de Google
-const pino = require('pino');
-const pinoHttp = require('pino-http');
-const helmet = require('helmet');
-const compression = require('compression');
-const rateLimit = require('express-rate-limit');
+// Optional dependencies: require them only if available so deploys without them still work.
+let logger = console;
+let _pinoHttpMiddleware = null;
+try {
+  const pino = require('pino');
+  const pinoHttp = require('pino-http');
+  logger = pino({ level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug') });
+  _pinoHttpMiddleware = pinoHttp({ logger });
+} catch (e) {
+  // If pino isn't installed, fall back to console without crashing the process.
+  console.warn('Optional dependency `pino` not available — falling back to console logger. Install `pino` to enable structured logging.');
+}
+
+let helmetMiddleware = null;
+try { helmetMiddleware = require('helmet')(); } catch (e) { /* optional */ }
+
+let compressionMiddleware = null;
+try { compressionMiddleware = require('compression')(); } catch (e) { /* optional */ }
+
+let rateLimitMiddleware = null;
+try {
+  const rateLimit = require('express-rate-limit');
+  rateLimitMiddleware = rateLimit({ windowMs: 60_000, max: Number(process.env.RATE_LIMIT_MAX || 200) });
+} catch (e) { /* optional */ }
 
 // Rutas
 const authRoutes = require('./routes/authRoutes');
@@ -36,15 +55,20 @@ const normalizeOrigin = (origin) => {
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
-// Structured logger (pino)
-const logger = pino({ level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug') });
-app.use(pinoHttp({ logger }));
+// Structured logger (pino) - optional
+if (_pinoHttpMiddleware) {
+  app.use(_pinoHttpMiddleware);
+} else {
+  // ensure we have a logger object with common methods used below
+  if (!logger.info) logger.info = (...args) => console.log(...args);
+  if (!logger.warn) logger.warn = (...args) => console.warn(...args);
+  if (!logger.error) logger.error = (...args) => console.error(...args);
+}
 
-// Security & performance middleware
-app.use(helmet());
-app.use(compression());
-// Basic rate limiting to avoid abusive clients. Tune values as needed.
-app.use(rateLimit({ windowMs: 60_000, max: Number(process.env.RATE_LIMIT_MAX || 200) }));
+// Security & performance middleware (optional depending on presence of packages)
+if (helmetMiddleware) app.use(helmetMiddleware);
+if (compressionMiddleware) app.use(compressionMiddleware);
+if (rateLimitMiddleware) app.use(rateLimitMiddleware);
 
 // Debug helper to confirm critical env vars get loaded (no real key exposure)
 console.log('🔑 GEMINI_API_KEY cargada:', Boolean(process.env.GEMINI_API_KEY));
