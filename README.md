@@ -60,6 +60,64 @@ Backend en Node.js/Express para generar presentaciones asistidas por IA, integra
 
 Si quieres que habilite linting automático (ESLint) o un workflow de CI (GitHub Actions) para checks automáticos, dímelo y lo preparo: añadiré la configuración y los scripts (requiere instalar dependencias o crear el workflow). 
 
+## Cambios recientes (limpieza y organización)
+
+Actualizado el repositorio para aplicar buenas prácticas y limpiar artefactos locales. Resumen de los cambios aplicados y dónde encontrarlos:
+
+- Archivos de prueba locales eliminados de la raíz y `scripts/`: `test-*.js`, `Untitled-1.html` y varios scripts de test se eliminaron porque no forman parte del backend en producción.
+- Scripts utilitarios movidos a `scripts/` desde la raíz: `create-groq-service.js`, `check-admin.js`, `check-presentaciones.js`, `check-usuarios.js`.
+- Backups/ variantes de `groqService` archivadas en `archive/cleanup-20251102/` como marcadores (placeholders):
+  - `archive/cleanup-20251102/services_groqService-corrupted.js`
+  - `archive/cleanup-20251102/services_groqService-clean.js`
+  - `archive/cleanup-20251102/services_groqService.js.backup.txt`
+  El contenido original queda en el historial de Git si necesitas recuperarlo. Los placeholders evitan que esos archivos sean ejecutables por accidente.
+- Añadido `.env.example` con las variables necesarias y un `.gitignore` mejorado.
+- Pequeñas mejoras en `package.json` (scripts) y en el README con instrucciones operativas.
+- Rama de trabajo: los cambios se hicieron en la rama `cleanup/remove-tests` y luego se fusionaron a `main`.
+
+Estos cambios se aplicaron para dejar el árbol del proyecto más limpio y facilitar el mantenimiento. Si prefieres que borre completamente los backups (en vez de archivarlos), puedo hacerlo (ten en cuenta que la eliminación permanente sólo se recupera mediante el historial de Git).
+
+### Cómo restaurar archivos archivados
+
+Si necesitas recuperar el contenido original de cualquiera de los archivos archivados, puedes:
+
+1. Buscar en el historial de Git (ej.: `git log -- services/groqService-corrupted.js` o `git checkout <commit> -- path/to/file`).
+2. O recuperar el placeholder desde `archive/cleanup-20251102/` y reemplazar manualmente en `services/`.
+
+## Cómo verificar localmente después de la limpieza (smoke test)
+
+1. Asegúrate de tener un `.env` con variables mínimas: `DATABASE_URL`, `JWT_SECRET`, `SESSION_SECRET`, `CLIENT_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (o usa variables de prueba locales). Usa `.env.example` como guía.
+2. Instala dependencias e inicia el servidor:
+
+```powershell
+npm install
+npm run start
+```
+
+3. En otra terminal, comprueba el endpoint de salud:
+
+```powershell
+curl http://localhost:8080/healthz
+```
+
+Si el proyecto está configurado con otro `PORT`, sustituye `8080` por el puerto correcto (o consulta `PORT` en tu `.env`).
+
+Si el servidor no arranca, revisa los logs; los problemas más comunes son variables de entorno faltantes o errores de conexión a la base de datos (TLS/CA). En caso de error TLS con Postgres, revisa la sección de `DATABASE_SSL_CA_B64` más abajo.
+
+## Puntos de atención / recomendaciones tras la limpieza
+
+- Sustituir cualquier uso temporal de `DATABASE_SSL_ALLOW_SELF_SIGNED=true` por `DATABASE_SSL_CA_B64` (configura la CA real en DigitalOcean u otro proveedor).
+- Evitar usar `MemoryStore` de `express-session` en producción: configura `REDIS_URL` y provee `connect-redis`/`ioredis` si vas a ejecutar múltiples instancias.
+- Añadir ESLint + Prettier y un workflow de CI para automatizar checks (puedo preparar los archivos de configuración y el workflow en un commit separado).
+- Mantener un procedimiento de backups fuera del repositorio para CA PEMs o certificados; no versionar certificados reales.
+
+## Siguientes pasos recomendados
+
+1. Ejecutar un smoke test en tu entorno local o staging.
+2. Reemplazar el override inseguro TLS por `DATABASE_SSL_CA_B64` en producción.
+3. Opcional: configurar ESLint y un workflow de CI (te puedo dejar el PR listo).
+
+
 ## Variables de entorno
 
 Defínelas en tu `.env`, en Render o en tu gestor de secretos. Sustituye `<...>` por tus datos reales.
