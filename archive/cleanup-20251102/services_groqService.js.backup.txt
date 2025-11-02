@@ -1,0 +1,6 @@
+// Archivo archivado: services/groqService.js.backup
+// Fecha de archivo: 2025-11-02
+// Nota: backup guardado como .txt para evitar ser ejecutado accidentalmente
+// Contenido original se puede recuperar desde el commit previo o del archivo backup en el historial.
+
+module.exports = {};
