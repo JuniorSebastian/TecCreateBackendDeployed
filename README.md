@@ -84,6 +84,8 @@ GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
 GEMINI_IMAGE_MODEL_FALLBACK=gemini-2.5-flash-image
 MAINTENANCE_GATE_SECRET=<opcional>
 SUPPORT_EMAIL=soporte@tu-dominio.com
+DATABASE_SSL_CA_B64=<opcional: PEM del CA codificado en base64, preferido en entornos cloud>
+REDIS_URL=redis://:<password>@<host>:<port>  # opcional, recomendado para sesiones en producción
 ```
 
 **Notas importantes:**
@@ -433,6 +435,19 @@ Ejemplo de uso:
 - Healthcheck: `GET /healthz` → usado por orquestadores (DigitalOcean, otros).
 - CORS: se valida contra `CLIENT_URL`, `PUBLIC_BASE_URL` y `ALLOWED_ORIGINS` (se normalizan URLs).
 - Sesiones: `express-session` con cookies `httpOnly`, `secure` y `sameSite=none` en producción. Para múltiples instancias, considera Redis u otro store.
+  - Para habilitar Redis como store en producción, define `REDIS_URL` en tu entorno (ej: `redis://:password@host:6379`). El backend usa `connect-redis`/`ioredis` si `REDIS_URL` está presente.
+  - Si no puedes usar Redis inmediatamente, recuerda que `MemoryStore` es inseguro en prod y causa fugas de memoria en procesos de larga duración.
+
+## Instrucciones rápidas para `DATABASE_SSL_CA_B64`
+
+- Si tu proveedor (p. ej. DigitalOcean) requiere una CA para validar Postgres TLS, genera la variable `DATABASE_SSL_CA_B64` conteniendo el PEM del CA en base64. Esto evita problemas con saltos de línea en UIs de variables.
+- PowerShell para generar base64 desde un archivo PEM:
+  ```powershell
+  $pem = Get-Content -Raw '.\ca-certificate.crt'
+  $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($pem))
+  Write-Output $b64
+  ```
+  Pega el contenido resultante en la variable `DATABASE_SSL_CA_B64` en tu panel de despliegue.
 
 ## Solución de problemas
 

@@ -5,6 +5,11 @@ const session = require('express-session');
 const cors = require('cors');
 const passport = require('passport');
 require('./config/passport'); // Configura la estrategia de Google
+const pino = require('pino');
+const pinoHttp = require('pino-http');
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 
 // Rutas
 const authRoutes = require('./routes/authRoutes');
@@ -30,6 +35,16 @@ const normalizeOrigin = (origin) => {
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
+
+// Structured logger (pino)
+const logger = pino({ level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug') });
+app.use(pinoHttp({ logger }));
+
+// Security & performance middleware
+app.use(helmet());
+app.use(compression());
+// Basic rate limiting to avoid abusive clients. Tune values as needed.
+app.use(rateLimit({ windowMs: 60_000, max: Number(process.env.RATE_LIMIT_MAX || 200) }));
 
 // Debug helper to confirm critical env vars get loaded (no real key exposure)
 console.log('🔑 GEMINI_API_KEY cargada:', Boolean(process.env.GEMINI_API_KEY));
@@ -106,6 +121,21 @@ if (Number.isFinite(sessionMaxAge) && sessionMaxAge > 0) {
   sessionConfig.cookie.maxAge = sessionMaxAge;
 }
 
+// Try to use Redis as session store when REDIS_URL is provided (recommended for prod)
+if (process.env.REDIS_URL) {
+  try {
+    // Note: requires `ioredis` and `connect-redis` to be installed in the runtime environment.
+    const Redis = require('ioredis');
+    const RedisStore = require('connect-redis')(session);
+    const redisClient = new Redis(process.env.REDIS_URL);
+    const redisStore = new RedisStore({ client: redisClient });
+    sessionConfig.store = redisStore;
+    logger.info('Using Redis session store');
+  } catch (e) {
+    logger.warn('Redis session store requested but failed to initialize (missing deps or connection error):', e && e.message ? e.message : e);
+  }
+}
+
 app.use(session(sessionConfig));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -113,6 +143,17 @@ app.use(passport.session());
 // 🔍 Healthcheck
 app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
+// Readiness: checks DB connectivity and dependencies (used for readiness probe)
+app.get('/ready', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    return res.status(200).json({ ready: true });
+  } catch (err) {
+    logger && logger.warn && logger.warn('Readiness check failed:', err && err.message ? err.message : err);
+    return res.status(500).json({ ready: false, error: String(err && err.message ? err.message : err) });
+  }
 });
 
 app.get('/', (req, res) => {
