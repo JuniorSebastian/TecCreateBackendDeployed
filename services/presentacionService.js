@@ -1,7 +1,7 @@
 const pool = require('../database');
-const { sanitizeContenido } = require('../utils/presentaciones');
-const { resolveTemplateKey } = require('../utils/pptThemes');
-const { resolveFontKey } = require('../utils/pptFonts');
+const { sanitizeContenido } = require('../lib/presentaciones');
+const { resolveTemplateKey } = require('../lib/pptThemes');
+const { resolveFontKey } = require('../lib/pptFonts');
 
 const normalizeId = (id) => {
   const numeric = Number(id);

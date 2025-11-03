@@ -13,7 +13,7 @@ const {
 	obtenerCatalogosUsuarios,
 } = require('../controllers/usuariosAdminController');
 
-const asyncHandler = require('../utils/asyncHandler');
+const asyncHandler = require('../lib/asyncHandler');
 
 router.get('/usuarios/catalogos', verificarToken, verificarEstado, verificarRol(['admin']), asyncHandler(obtenerCatalogosUsuarios));
 router.get('/usuarios', verificarToken, verificarEstado, verificarRol(['admin']), asyncHandler(listarUsuarios));

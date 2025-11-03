@@ -4,7 +4,7 @@ const {
   normalizeStatus,
   getSupportCategorySummary,
   getSupportStatusSummary,
-} = require('../utils/supportReports');
+} = require('../lib/supportReports');
 
 const buildResumenFromMessage = (mensaje, maxLength = 140) => {
   if (typeof mensaje !== 'string') {

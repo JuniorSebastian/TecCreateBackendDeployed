@@ -5,7 +5,7 @@ const {
   getLatestMaintenance,
 } = require('../services/maintenanceService');
 const soporteService = require('../services/soporteService');
-const { normalizeStatus } = require('../utils/supportReports');
+const { normalizeStatus } = require('../lib/supportReports');
 
 const parsePositiveInt = (value) => {
   const parsed = Number.parseInt(value, 10);

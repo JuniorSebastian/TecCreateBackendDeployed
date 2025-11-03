@@ -1,7 +1,7 @@
 const { DateTime } = require('luxon');
 const pool = require('../database');
-const { resolveTemplateKey, getTemplateSummary } = require('../utils/pptThemes');
-const { resolveFontKey, getFontSummary, DEFAULT_FONT_KEY } = require('../utils/pptFonts');
+const { resolveTemplateKey, getTemplateSummary } = require('../lib/pptThemes');
+const { resolveFontKey, getFontSummary, DEFAULT_FONT_KEY } = require('../lib/pptFonts');
 
 const DASHBOARD_TIMEZONE = process.env.DASHBOARD_TIMEZONE || 'America/Lima';
 

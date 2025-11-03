@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../database');
 const { getMaintenanceGateInfo } = require('../services/maintenanceService');
 const router = express.Router();
-const asyncHandler = require('../utils/asyncHandler');
+const asyncHandler = require('../lib/asyncHandler');
 
 // Inicio login con Google
 // Construimos manualmente la URL de autorización de Google para asegurar

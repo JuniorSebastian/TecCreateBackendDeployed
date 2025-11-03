@@ -5,7 +5,7 @@ const fs = require('fs/promises');
 const crypto = require('crypto');
 const QRCode = require('qrcode');
 const pool = require('../database');
-const { sanitizeContenido } = require('../utils/presentaciones');
+const { sanitizeContenido } = require('../lib/presentaciones');
 const {
   obtenerPresentacionPorIdYUsuario,
   obtenerPresentacionPorId,
@@ -22,17 +22,17 @@ const {
   resolveTemplateKey,
   listTemplateSummaries,
   getTemplateSummary,
-} = require('../utils/pptThemes');
+} = require('../lib/pptThemes');
 const {
   listTopicCategories,
   getTopicByKey,
-} = require('../utils/presentacionTopics');
+} = require('../lib/presentacionTopics');
 const {
   resolveFontKey,
   listFontSummaries,
   getFontSummary,
   DEFAULT_FONT_KEY,
-} = require('../utils/pptFonts');
+} = require('../lib/pptFonts');
 
 const SHARE_OUTPUT_DIR = path.resolve(__dirname, '..', 'public', 'shared-presentaciones');
 

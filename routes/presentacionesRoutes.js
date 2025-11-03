@@ -20,7 +20,7 @@ const {
   obtenerTemaSugeridoPorClave,
 } = require('../controllers/presentacionesController');
 
-const asyncHandler = require('../utils/asyncHandler');
+const asyncHandler = require('../lib/asyncHandler');
 
 // ✅ Usa el middleware correctamente
 router.get('/plantillas', verificarToken, verificarEstado, verificarRol(['admin', 'usuario', 'soporte']), asyncHandler(obtenerPlantillasPpt));

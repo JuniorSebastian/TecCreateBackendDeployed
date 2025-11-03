@@ -1,8 +1,8 @@
 const fs = require('fs');
 
 const groqServiceContent = `const { jsonrepair } = require('jsonrepair');
-const { sanitizeContenido } = require('../utils/presentaciones');
-const { corregirTexto, corregirLista } = require('../utils/ortografia');
+const { sanitizeContenido } = require('../lib/presentaciones');
+const { corregirTexto, corregirLista } = require('../lib/ortografia');
 const { ensureGroqClient } = require('./groqClient');
 
 const MAX_LOG_LENGTH = 400;

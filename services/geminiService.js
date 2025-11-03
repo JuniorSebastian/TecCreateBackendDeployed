@@ -1,14 +1,14 @@
 const fs = require('fs/promises');
 const path = require('path');
 const pool = require('../database');
-const { sanitizeContenido } = require('../utils/presentaciones');
+const { sanitizeContenido } = require('../lib/presentaciones');
 const { normalizeSlides } = require('./pptService');
 const {
   PPT_IMAGE_ASPECT_RATIO,
   PPT_IMAGE_TARGET_HEIGHT,
   PPT_IMAGE_TARGET_WIDTH,
   normalizeImageForPpt,
-} = require('../utils/pptImages');
+} = require('../lib/pptImages');
 
 const DEFAULT_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.0-flash-preview-image-generation';
 const FALLBACK_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL_FALLBACK || 'gemini-2.5-flash-image';

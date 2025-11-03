@@ -7,7 +7,7 @@ Estructura principal (carpetas relevantes):
 - `routes/` — definición de rutas Express. Cada fichero exporta un router.
 - `controllers/` — lógica de controladores; reciben req/res y llaman a servicios.
 - `services/` — lógica de negocio y llamadas a APIs externas (Groq, Gemini, generación PPT).
-- `utils/` — utilidades puras y helpers (ortografía, formatos, generación de bullets, etc.).
+- `lib/` — utilidades puras y helpers (ortografía, formatos, generación de bullets, etc.).
 - `middlewares/` — middlewares reutilizables (auth, roles, validaciones).
 - `public/` — assets estáticos (imágenes, recursos públicos).
 - `scripts/` — herramientas y scripts de mantenimiento (no parte del runtime del servidor).

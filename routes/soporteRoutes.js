@@ -5,7 +5,7 @@ const {
   verificarRol,
 } = require('../middlewares/authMiddleware');
 const soporteController = require('../controllers/soporteController');
-const asyncHandler = require('../utils/asyncHandler');
+const asyncHandler = require('../lib/asyncHandler');
 
 const router = express.Router();
 const requiereSoporte = [verificarToken, verificarEstado, verificarRol(['admin', 'soporte'])];

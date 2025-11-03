@@ -360,7 +360,7 @@ Para detalles completos revisa los controladores en `controllers/` o el manual t
   - **Endpoint**: usa `:generateContent` (no `:generateImage`)
   - **Request body**: incluye `responseModalities: ['TEXT', 'IMAGE']`
   - **Response**: imagen en `candidates[].content.parts[].inlineData.data`
-- **pptxgenjs**: arma el archivo PPTX usando plantillas temáticas (`utils/pptThemes.js`) y fuentes personalizadas (`utils/pptFonts.js`).
+  - **pptxgenjs**: arma el archivo PPTX usando plantillas temáticas (`lib/pptThemes.js`) y fuentes personalizadas (`lib/pptFonts.js`).
 - **Degradación elegante**: si no hay claves configuradas o ningún modelo está disponible, el backend funciona sin imágenes generadas (se crean esquemas básicos con texto únicamente).
 
 ### Idiomas soportados

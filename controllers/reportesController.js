@@ -9,7 +9,7 @@ const {
   listSupportStatuses,
   normalizeCategory,
   normalizeStatus,
-} = require('../utils/supportReports');
+} = require('../lib/supportReports');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

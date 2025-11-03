@@ -76,14 +76,14 @@ const splitBulletForFormatting = (text) => {
 const fs = require('fs/promises');
 const path = require('path');
 const PptxGenJS = require('pptxgenjs');
-const { sanitizeContenido } = require('../utils/presentaciones');
-const { getTemplateTheme, resolveTemplateKey } = require('../utils/pptThemes');
-const { getFontConfig } = require('../utils/pptFonts');
+const { sanitizeContenido } = require('../lib/presentaciones');
+const { getTemplateTheme, resolveTemplateKey } = require('../lib/pptThemes');
+const { getFontConfig } = require('../lib/pptFonts');
 const {
   bufferToDataUri,
   normalizeDataUriForPpt,
   normalizeImageForPpt,
-} = require('../utils/pptImages');
+} = require('../lib/pptImages');
 
 const DEFAULT_BULLET = 'Contenido pendiente';
 

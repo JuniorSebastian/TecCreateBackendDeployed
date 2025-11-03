@@ -1,5 +1,5 @@
 const { jsonrepair } = require('jsonrepair');
-const { sanitizeContenido } = require('../utils/presentaciones');
+const { sanitizeContenido } = require('../lib/presentaciones');
 const { c      // SEGUNDO: Si no hay bullets, intentar separar por líneas y otros delimitadores
       const expanded = item
         .replace(/[\u2022•▪◦●]/g, '\n')
@@ -8,7 +8,7 @@ const { c      // SEGUNDO: Si no hay bullets, intentar separar por líneas y otr
         // Agregar separación por cambio de caso (incluye números)
         .replace(/([a-záéíóúñ0-9])([A-ZÁÉÍÓÚÑ])/g, '$1\n$2')
         .replace(/([.!?])([A-ZÁÉÍÓÚÑ])/g, '$1\n$2')
-        .split(/[\n\r]+/);exto, corregirLista } = require('../utils/ortografia');
+  .split(/[\n\r]+/);exto, corregirLista } = require('../lib/ortografia');
 const { ensureGroqClient } = require('./groqClient');
 
 const MAX_LOG_LENGTH = 400;

@@ -16,7 +16,7 @@ const {
   eliminarReporteSoporte,
 } = require('../controllers/reportesController');
 
-const asyncHandler = require('../utils/asyncHandler');
+const asyncHandler = require('../lib/asyncHandler');
 
 const router = express.Router();
 
