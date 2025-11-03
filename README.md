@@ -10,59 +10,59 @@
 ## 📑 Índice Completo
 
 ### 🚀 Inicio Rápido
-- [Resumen Ejecutivo](#-resumen-ejecutivo)
-- [Características Principales](#-características-principales)
-- [Tecnologías Utilizadas](#-tecnologías-utilizadas)
-- [Requisitos del Sistema](#-requisitos-del-sistema)
+- [Resumen Ejecutivo](#resumen-ejecutivo)
+- [Características Principales](#características-principales)
+- [Tecnologías Utilizadas](#tecnologías-utilizadas)
+- [Requisitos del Sistema](#requisitos-del-sistema)
 
 ### 🏗️ Arquitectura y Diseño
-- [Visión General de la Arquitectura](#-visión-general-de-la-arquitectura)
-- [Estructura de Carpetas](#-estructura-de-carpetas-detallada)
-- [Flujo de Datos](#-flujo-de-datos)
-- [Patrones de Diseño](#-patrones-de-diseño)
+- [Visión General de la Arquitectura](#visión-general-de-la-arquitectura)
+- [Estructura de Carpetas](#estructura-de-carpetas-detallada)
+- [Flujo de Datos](#flujo-de-datos)
+- [Patrones de Diseño](#patrones-de-diseño)
 
 ### ⚙️ Configuración
-- [Variables de Entorno](#-variables-de-entorno-completas)
-- [Configuración de Base de Datos](#-configuración-de-base-de-datos)
-- [Configuración de OAuth](#-configuración-de-oauth-con-google)
-- [Configuración de Servicios IA](#-configuración-de-servicios-ia)
+- [Variables de Entorno](#variables-de-entorno-completas)
+- [Configuración de Base de Datos](#configuración-de-base-de-datos)
+- [Configuración de OAuth](#configuración-de-oauth-con-google)
+- [Configuración de Servicios IA](#configuración-de-servicios-ia)
 
 ### 🔧 Instalación y Despliegue
-- [Instalación Local](#-instalación-local)
-- [Despliegue en Producción](#-despliegue-en-producción)
-- [Despliegue con Docker](#-despliegue-con-docker)
-- [Despliegue en DigitalOcean](#-despliegue-en-digitalocean)
-- [Despliegue en Render](#-despliegue-en-render)
+- [Instalación Local](#instalación-local)
+- [Despliegue en Producción](#despliegue-en-producción)
+- [Despliegue con Docker](#despliegue-con-docker)
+- [Despliegue en DigitalOcean](#despliegue-en-digitalocean)
+- [Despliegue en Render](#despliegue-en-render)
 
 ### 📡 API y Endpoints
-- [Autenticación y Seguridad](#-autenticación-y-seguridad)
-- [Endpoints de Autenticación](#-endpoints-de-autenticación)
-- [Endpoints de Presentaciones](#-endpoints-de-presentaciones)
-- [Endpoints de Administración](#-endpoints-de-administración)
-- [Endpoints de Reportes y Soporte](#-endpoints-de-reportes-y-soporte)
+- [Autenticación y Seguridad](#autenticación-y-seguridad)
+- [Endpoints de Autenticación](#endpoints-de-autenticación)
+- [Endpoints de Presentaciones](#endpoints-de-presentaciones)
+- [Endpoints de Administración](#endpoints-de-administración)
+- [Endpoints de Reportes y Soporte](#endpoints-de-reportes-y-soporte)
 
 ### 🤖 Servicios de IA
-- [Servicio Groq (Texto)](#-servicio-groq-texto)
-- [Servicio Gemini (Imágenes)](#-servicio-gemini-imágenes)
-- [Generación de Presentaciones](#-generación-de-presentaciones)
-- [Exportación a PPTX](#-exportación-a-pptx)
+- [Servicio Groq (Texto)](#servicio-groq-texto)
+- [Servicio Gemini (Imágenes)](#servicio-gemini-imágenes)
+- [Generación de Presentaciones](#generación-de-presentaciones)
+- [Exportación a PPTX](#exportación-a-pptx)
 
 ### 👥 Gestión de Usuarios y Roles
-- [Sistema de Roles](#-sistema-de-roles)
-- [Permisos y Autorización](#-permisos-y-autorización)
-- [Administración de Usuarios](#-administración-de-usuarios)
+- [Sistema de Roles](#sistema-de-roles)
+- [Permisos y Autorización](#permisos-y-autorización)
+- [Administración de Usuarios](#administración-de-usuarios)
 
 ### 🛠️ Mantenimiento y Operaciones
-- [Monitoreo y Logs](#-monitoreo-y-logs)
-- [Modo Mantenimiento](#-modo-mantenimiento)
-- [Respaldos y Recuperación](#-respaldos-y-recuperación)
-- [Solución de Problemas](#-solución-de-problemas-detallada)
+- [Monitoreo y Logs](#monitoreo-y-logs)
+- [Modo Mantenimiento](#modo-mantenimiento)
+- [Respaldos y Recuperación](#respaldos-y-recuperación)
+- [Solución de Problemas](#solución-de-problemas-detallada)
 
 ### 📚 Recursos Adicionales
-- [Scripts Útiles](#-scripts-útiles)
-- [Mejores Prácticas](#-mejores-prácticas)
-- [FAQ](#-preguntas-frecuentes-faq)
-- [Documentación Complementaria](#-documentación-complementaria)
+- [Scripts Útiles](#scripts-útiles)
+- [Mejores Prácticas](#mejores-prácticas)
+- [FAQ](#preguntas-frecuentes-faq)
+- [Documentación Complementaria](#documentación-complementaria)
 
 ---
 
@@ -557,8 +557,8 @@ Guía visual (con capturas o descripciones detalladas) para configurar Google OA
 
 #### Fase 5: Configurar Backend
 ```env
-GOOGLE_CLIENT_ID=123456789-abcdefg.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=GOCSPX-abc123def456
+GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-*********************
 GOOGLE_CALLBACK_URL=https://api.tecsup.teccreate.edu/auth/google/callback
 ADMIN_EMAILS=coordinador@tecsup.edu.pe,director@tecsup.edu.pe,soporte@tecsup.edu.pe
 ```
@@ -1222,10 +1222,10 @@ ALLOWED_ORIGINS=https://app.teccreate.edu,https://api.teccreate.edu  # CORS orig
 # ============================================
 # BASE DE DATOS POSTGRESQL
 # ============================================
-DATABASE_URL=postgresql://usuario:password@host:5432/teccreate  # Connection string completa
+DATABASE_URL=postgresql://usuario:***@host:5432/teccreate  # Connection string completa
 DATABASE_SSL=true                            # true para conexiones TLS (producción)
 DATABASE_SSL_ALLOW_SELF_SIGNED=false         # ⚠️ Solo para desarrollo, NO usar en producción
-DATABASE_SSL_CA_B64=LS0tLS1CRUdJTi...        # Certificado CA en base64 (opcional, recomendado)
+DATABASE_SSL_CA_B64=LS0tLS1***               # Certificado CA en base64 (opcional, recomendado)
 
 # Pool de conexiones (ajustar según plan de PostgreSQL)
 PGPOOL_MAX=3                                 # Máximo de conexiones simultáneas
@@ -1235,8 +1235,8 @@ PGPOOL_CONNECTION_TIMEOUT=5000               # Timeout de conexión (ms)
 # ============================================
 # SEGURIDAD Y AUTENTICACIÓN
 # ============================================
-SESSION_SECRET=genera-un-string-aleatorio-seguro-min-32-caracteres
-JWT_SECRET=otra-clave-aleatoria-diferente-para-firmar-tokens
+SESSION_SECRET=***********************************  # Genera un string aleatorio seguro min 32 caracteres
+JWT_SECRET=***********************************     # Otra clave aleatoria diferente para firmar tokens
 JWT_EXPIRES_IN=1d                            # Duración del JWT (1d = 1 día, 7d = 7 días)
 
 # Whitelist de correos institucionales Tecsup permitidos (separados por coma)
@@ -1245,18 +1245,18 @@ ADMIN_EMAILS=coordinador@tecsup.edu.pe,director@tecsup.edu.pe,soporte@tecsup.edu
 # ============================================
 # GOOGLE OAUTH 2.0
 # ============================================
-GOOGLE_CLIENT_ID=123456789-abcdefg.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=GOCSPX-abcd1234
+GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-*********************
 GOOGLE_CALLBACK_URL=https://api.tecsup.teccreate.edu/auth/google/callback
 
 # ============================================
 # SERVICIOS DE IA
 # ============================================
 # Groq (Generación de texto)
-GROQ_API_KEY=gsk_abcd1234efgh5678ijkl  # Opcional, obtén en https://groq.com
+GROQ_API_KEY=gsk_*********************  # Opcional, obtén en https://groq.com
 
 # Gemini (Generación de imágenes)
-GEMINI_API_KEY=AIzaSyAaBbCcDdEeFfGg  # Obtén en https://aistudio.google.com/apikey
+GEMINI_API_KEY=AIzaSy*********************  # Obtén en https://aistudio.google.com/apikey
 GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation  # Modelo principal
 GEMINI_IMAGE_MODEL_FALLBACK=gemini-2.5-flash-image            # Modelo de respaldo
 
@@ -1557,8 +1557,8 @@ DELETE FROM imagenes WHERE presentacion_id NOT IN (SELECT id FROM presentaciones
 ### 4. Configurar Variables de Entorno
 
 ```env
-GOOGLE_CLIENT_ID=123456789-abcdefghijklmnop.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=GOCSPX-abc123def456ghi789
+GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-*********************
 GOOGLE_CALLBACK_URL=https://api.teccreate.edu/auth/google/callback
 ```
 
@@ -1677,7 +1677,7 @@ if (token) {
 4. Copia la clave (empieza con `gsk_`)
 
 ```env
-GROQ_API_KEY=gsk_abc123def456ghi789jkl012mno345
+GROQ_API_KEY=gsk_*********************
 ```
 
 #### 2. Modelos Disponibles
@@ -1730,7 +1730,7 @@ Estructura requerida:
 4. Copia la clave (empieza con `AIzaSy`)
 
 ```env
-GEMINI_API_KEY=AIzaSyAaBbCcDdEeFfGgHhIiJjKkLlMm
+GEMINI_API_KEY=AIzaSy*********************
 ```
 
 ⚠️ **IMPORTANTE: Nunca subas esta clave a GitHub o repositorios públicos**
@@ -1875,18 +1875,18 @@ cp .env.example .env
 ```env
 NODE_ENV=development
 PORT=3001
-DATABASE_URL=postgresql://postgres:password@localhost:5432/teccreate
+DATABASE_URL=postgresql://postgres:***@localhost:5432/teccreate
 DATABASE_SSL=false
 CLIENT_URL=http://localhost:5173
 PUBLIC_BASE_URL=http://localhost:3001
-GOOGLE_CLIENT_ID=tu-client-id
-GOOGLE_CLIENT_SECRET=tu-client-secret
+GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-*********************
 GOOGLE_CALLBACK_URL=http://localhost:3001/auth/google/callback
-SESSION_SECRET=genera-clave-aleatoria-32-caracteres
-JWT_SECRET=otra-clave-diferente-32-caracteres
-ADMIN_EMAILS=tu-email@gmail.com
-GROQ_API_KEY=gsk_tu_clave
-GEMINI_API_KEY=AIzaSy_tu_clave
+SESSION_SECRET=***********************************
+JWT_SECRET=***********************************
+ADMIN_EMAILS=tu-email@tecsup.edu.pe
+GROQ_API_KEY=gsk_*********************
+GEMINI_API_KEY=AIzaSy*********************
 ```
 
 ### Paso 4: Configurar PostgreSQL Local
@@ -2185,20 +2185,20 @@ ALLOWED_ORIGINS=https://tu-frontend.ondigitalocean.app
 DATABASE_SSL=true
 DATABASE_SSL_CA_B64=LS0tLS1CRUdJTi...  (descargado del panel)
 SESSION_SECRET=<genera-uno-seguro>
-JWT_SECRET=<genera-otro-diferente>
-GOOGLE_CLIENT_ID=<tu-client-id>
-GOOGLE_CLIENT_SECRET=<tu-client-secret>
+JWT_SECRET=***********************************
+GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-*********************
 GOOGLE_CALLBACK_URL=https://tu-app.ondigitalocean.app/auth/google/callback
 ADMIN_EMAILS=coordinador@tecsup.edu.pe,director@tecsup.edu.pe,soporte@tecsup.edu.pe
-GROQ_API_KEY=gsk_tu_clave
-GEMINI_API_KEY=AIzaSy_tu_clave
+GROQ_API_KEY=gsk_*********************
+GEMINI_API_KEY=AIzaSy*********************
 ```
 
 #### 5. Aplicar Schema a Base de Datos
 
 ```bash
 # Obtener connection string del panel (Connection Details)
-psql "postgresql://user:pass@host:25060/db?sslmode=require" -f estructura_presentador_ia.sql
+psql "postgresql://user:***@host:25060/db?sslmode=require" -f estructura_presentador_ia.sql
 ```
 
 #### 6. Deploy
@@ -2442,13 +2442,13 @@ PUBLIC_BASE_URL=https://teccreate-backend.onrender.com
 CLIENT_URL=https://tu-frontend.onrender.com
 DATABASE_SSL=true
 SESSION_SECRET=<auto-generado por Render>
-JWT_SECRET=<auto-generado por Render>
-GOOGLE_CLIENT_ID=<tu-client-id>
-GOOGLE_CLIENT_SECRET=<tu-client-secret>
+JWT_SECRET=***********************************
+GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-*********************
 GOOGLE_CALLBACK_URL=https://teccreate-backend.onrender.com/auth/google/callback
 ADMIN_EMAILS=coordinador@tecsup.edu.pe,director@tecsup.edu.pe,soporte@tecsup.edu.pe
-GROQ_API_KEY=gsk_tu_clave
-GEMINI_API_KEY=AIzaSy_tu_clave
+GROQ_API_KEY=gsk_*********************
+GEMINI_API_KEY=AIzaSy*********************
 GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
 GEMINI_IMAGE_MODEL_FALLBACK=gemini-2.5-flash-image
 ```
@@ -3949,23 +3949,23 @@ PUBLIC_BASE_URL=https://<tu-backend>
 CLIENT_URL=https://<tu-frontend>
 ALLOWED_ORIGINS=https://<tu-frontend>,https://<tu-backend>
 
-DATABASE_URL=postgresql://<user>:<pass>@<host>:<port>/<db>
+DATABASE_URL=postgresql://<user>:***@<host>:<port>/<db>
 DATABASE_SSL=true
 PGPOOL_MAX=3
 PGPOOL_IDLE_TIMEOUT=10000
 PGPOOL_CONNECTION_TIMEOUT=5000
 
-SESSION_SECRET=<aleatorio>
-JWT_SECRET=<aleatorio>
+SESSION_SECRET=***********************************
+JWT_SECRET=***********************************
 JWT_EXPIRES_IN=1d
 ADMIN_EMAILS=coordinador@tecsup.edu.pe,director@tecsup.edu.pe,soporte@tecsup.edu.pe
 
-GOOGLE_CLIENT_ID=<client_id>
-GOOGLE_CLIENT_SECRET=<client_secret>
+GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-*********************
 GOOGLE_CALLBACK_URL=https://<tu-backend>/auth/google/callback
 
-GROQ_API_KEY=<opcional>
-GEMINI_API_KEY=<tu_gemini_api_key>
+GROQ_API_KEY=gsk_*********************
+GEMINI_API_KEY=AIzaSy*********************
 GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
 GEMINI_IMAGE_MODEL_FALLBACK=gemini-2.5-flash-image
 MAINTENANCE_GATE_SECRET=<opcional>
