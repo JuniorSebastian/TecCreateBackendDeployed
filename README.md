@@ -350,6 +350,7 @@ backend/
 │   ├── pptThemes.js                     # Plantillas visuales (7 temas)
 │   ├── presentaciones.js                # Helpers presentaciones
 │   ├── presentacionTopics.js            # Temas sugeridos por carrera
+│   ├── asyncHandler.js                  # Wrapper async para manejo de errores
 │   └── supportReports.js                # Helpers reportes
 │
 ├── 📁 public/                           # Archivos estáticos públicos
@@ -368,6 +369,615 @@ backend/
 │   ├── query-user.js                    # Consulta usuario por email
 │   ├── seed-support-logs.js             # Genera datos de prueba
 │   ├── test-maintenance-gate.js         # Prueba modo mantenimiento
+│   ├── test-middleware-suspended.js     # Prueba usuarios suspendidos
+│   ├── test-reportes-backend.js         # Prueba endpoints reportes
+│   └── test-suspended-user.js           # Prueba suspensión usuario
+│
+├── 📁 certs/                            # Certificados SSL (NO versionar)
+│   └── *.crt, *.pem                     # Certificados CA para PostgreSQL
+│
+├── 📁 archive/                          # Archivos archivados (backups)
+│   └── cleanup-20251102/                # Limpieza Nov 2025
+│       ├── services_groqService-corrupted.js
+│       ├── services_groqService-clean.js
+│       └── services_groqService.js.backup.txt
+│
+├── 📄 Archivos de configuración raíz
+│   ├── ca-certificate.crt               # Certificado CA PostgreSQL (DigitalOcean)
+│   ├── CODE_OF_CONDUCT.md               # Código de conducta del proyecto
+│   ├── CONTRIBUTING.md                  # Guía de contribución
+│   ├── DEPLOY_DIGITALOCEAN.md           # Guía específica de deployment en DO
+│   ├── FIX_CALLBACK_DIGITALOCEAN.md     # Solución a problemas de OAuth callback
+│   ├── PASOS_CONFIGURACION_OAUTH.md     # Tutorial paso a paso OAuth Google
+│   └── SOLUCION_URGENTE_FRONTEND.md     # Fixes urgentes para frontend
+│
+└── 📄 Scripts de raíz (mover a scripts/ recomendado)
+    ├── check-admin.js                   # Verificar usuarios admin
+    ├── check-presentaciones.js          # Verificar presentaciones en DB
+    ├── check-usuarios.js                # Listar usuarios registrados
+    └── create-groq-service.js           # Generador de servicio Groq
+```
+
+### Explicación de Carpetas Clave
+
+#### **`lib/`** - Utilidades y Helpers
+Módulos reutilizables sin lógica de negocio:
+- **ortografia.js**: Corrector ortográfico usando nspell + diccionario español
+- **pptFonts.js**: Configuración de fuentes personalizadas para PPTX
+- **pptImages.js**: Procesamiento y optimización de imágenes con sharp
+- **pptThemes.js**: 7 plantillas visuales (default, modern, minimal, software, maquinaria, mecatronica, quimica)
+- **presentaciones.js**: Helpers de validación y transformación de presentaciones
+- **presentacionTopics.js**: Temas sugeridos organizados por carrera técnica
+- **asyncHandler.js**: Wrapper para manejar errores en rutas async/await
+- **supportReports.js**: Utilidades para formatear reportes de soporte
+
+#### **`certs/`** - Certificados SSL
+Almacena certificados CA para conexiones PostgreSQL seguras. **Importante**: Esta carpeta está en `.gitignore` y NO debe versionarse.
+
+#### **`archive/`** - Archivos Archivados
+Backups de código antiguo o corrupto mantenidos por historial. No se ejecutan en producción.
+
+---
+
+## 📋 Archivos de Documentación Adicionales
+
+El proyecto incluye varios archivos markdown complementarios en la raíz:
+
+### `CODE_OF_CONDUCT.md`
+**Código de Conducta del Proyecto**
+
+Define las normas de comportamiento esperadas para contribuidores y usuarios:
+- Compromiso con ambiente inclusivo y respetuoso
+- Ejemplos de comportamiento aceptable e inaceptable
+- Proceso de reporte de incidentes
+- Consecuencias por violaciones
+
+**Uso:** Leer antes de contribuir al proyecto o participar en discusiones.
+
+---
+
+### `CONTRIBUTING.md`
+**Guía de Contribución**
+
+Instrucciones detalladas para contribuir al proyecto:
+- Configuración del entorno de desarrollo
+- Estándares de código (ESLint, Prettier)
+- Convenciones de commits (Conventional Commits)
+- Proceso de Pull Requests
+- Testing y validación
+- Revisión de código
+
+**Pasos básicos:**
+```bash
+# 1. Fork el repositorio
+# 2. Crea rama feature
+git checkout -b feature/nueva-funcionalidad
+
+# 3. Haz cambios y commits
+git commit -m "feat(presentaciones): add new feature"
+
+# 4. Push y abre PR
+git push origin feature/nueva-funcionalidad
+```
+
+---
+
+### `DEPLOY_DIGITALOCEAN.md`
+**Guía Específica de Deployment en DigitalOcean**
+
+Tutorial paso a paso para desplegar en DigitalOcean App Platform:
+1. Crear cuenta y conectar GitHub
+2. Configurar App Platform desde repositorio
+3. Configurar variables de entorno (con ejemplos)
+4. Crear y conectar base de datos PostgreSQL
+5. Configurar certificado SSL para DB (`DATABASE_SSL_CA_B64`)
+6. Configurar dominio personalizado
+7. Monitoreo y logs
+8. Troubleshooting específico de DigitalOcean
+
+**Nota:** Este README ya incluye la guía de deployment completa en la sección [Despliegue en DigitalOcean](#️-despliegue-en-digitalocean), pero `DEPLOY_DIGITALOCEAN.md` puede tener detalles adicionales específicos de la plataforma.
+
+---
+
+### `FIX_CALLBACK_DIGITALOCEAN.md`
+**Solución a Problemas de OAuth Callback**
+
+Documenta el fix para el error común `redirect_uri_mismatch` en DigitalOcean:
+
+**Problema:**
+```
+Error: redirect_uri_mismatch
+The redirect URI in the request, https://tu-app.ondigitalocean.app/auth/google/callback,
+does not match the ones authorized for the OAuth client.
+```
+
+**Solución:**
+1. Obtener URL exacta de la app en DigitalOcean (con o sin trailing slash)
+2. Ir a Google Cloud Console → Credentials
+3. Editar OAuth Client ID
+4. Agregar EXACTAMENTE la URL en "Authorized redirect URIs"
+5. Actualizar `GOOGLE_CALLBACK_URL` en variables de entorno
+6. Restart de la app
+
+**Verificación:**
+```bash
+curl https://tu-app.ondigitalocean.app/auth/google
+# Debe redirigir a Google OAuth sin errores
+```
+
+---
+
+### `PASOS_CONFIGURACION_OAUTH.md`
+**Tutorial Paso a Paso: Configuración OAuth Google**
+
+Guía visual (con capturas o descripciones detalladas) para configurar Google OAuth desde cero:
+
+#### Fase 1: Crear Proyecto en Google Cloud
+1. Ir a [console.cloud.google.com](https://console.cloud.google.com)
+2. Crear nuevo proyecto: "TecCreate Backend"
+3. Seleccionar el proyecto
+
+#### Fase 2: Habilitar APIs
+1. Menú → APIs & Services → Library
+2. Buscar "Google+ API" o "People API"
+3. Click "Enable"
+
+#### Fase 3: Configurar Pantalla de Consentimiento
+1. APIs & Services → OAuth consent screen
+2. Seleccionar tipo (Internal para Google Workspace, External para público)
+3. Completar información:
+   - App name: TecCreate
+   - User support email: tu-email@instituto.edu
+   - Logo (opcional)
+   - App domain (tu dominio)
+4. Scopes: Agregar `userinfo.email`, `userinfo.profile`
+5. Test users (si es External): Agregar emails de prueba
+6. Guardar y continuar
+
+#### Fase 4: Crear Credenciales
+1. APIs & Services → Credentials → Create Credentials
+2. Seleccionar "OAuth Client ID"
+3. Application type: Web application
+4. Name: TecCreate Backend
+5. **Authorized JavaScript origins:**
+   ```
+   https://api.teccreate.edu
+   http://localhost:3001
+   ```
+6. **Authorized redirect URIs:**
+   ```
+   https://api.teccreate.edu/auth/google/callback
+   http://localhost:3001/auth/google/callback
+   ```
+7. Click "Create"
+8. **COPIAR Client ID y Client Secret** (guardar en lugar seguro)
+
+#### Fase 5: Configurar Backend
+```env
+GOOGLE_CLIENT_ID=123456789-abcdefg.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-abc123def456
+GOOGLE_CALLBACK_URL=https://api.teccreate.edu/auth/google/callback
+ADMIN_EMAILS=profesor1@instituto.edu,profesor2@instituto.edu
+```
+
+#### Fase 6: Probar
+1. Arrancar backend: `npm start`
+2. Abrir navegador: `http://localhost:3001/auth/google`
+3. Login con un email de `ADMIN_EMAILS`
+4. Verificar redirección exitosa con token
+
+**Troubleshooting incluido en el archivo para:**
+- redirect_uri_mismatch
+- invalid_client
+- access_denied
+- Correos no autorizados
+
+---
+
+### `SOLUCION_URGENTE_FRONTEND.md`
+**Fixes Urgentes para Integración Frontend**
+
+Documenta soluciones a problemas comunes de integración con el frontend:
+
+#### 1. CORS Bloqueado
+```javascript
+// Frontend: Configurar Axios base URL
+import axios from 'axios';
+
+axios.defaults.baseURL = 'https://api.teccreate.edu';
+axios.defaults.withCredentials = true;
+
+// Interceptor para JWT
+axios.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+```
+
+```env
+# Backend: Configurar CORS
+ALLOWED_ORIGINS=https://app.teccreate.edu,https://admin.teccreate.edu
+CLIENT_URL=https://app.teccreate.edu
+```
+
+#### 2. Token Expirado (403)
+```javascript
+// Interceptor para refrescar o redirigir
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 403) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+#### 3. Exportar PPTX (Blob)
+```javascript
+// Correcto manejo de descarga
+async function descargarPPTX(presentacionId) {
+  try {
+    const response = await axios.get(`/presentaciones/${presentacionId}/export`, {
+      responseType: 'blob'  // ⚠️ IMPORTANTE
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `presentacion_${presentacionId}.pptx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error al descargar:', error);
+    alert('No se pudo descargar la presentación');
+  }
+}
+```
+
+#### 4. Manejo de Estados de Carga
+```javascript
+// Al generar presentación (puede tardar 10-30s)
+const [loading, setLoading] = useState(false);
+const [progress, setProgress] = useState(0);
+
+async function generarPresentacion(datos) {
+  setLoading(true);
+  setProgress(0);
+
+  // Simulador de progreso (opcional)
+  const progressInterval = setInterval(() => {
+    setProgress(prev => Math.min(prev + 10, 90));
+  }, 1000);
+
+  try {
+    const response = await axios.post('/presentaciones/generar', datos, {
+      timeout: 60000  // 60 segundos
+    });
+    
+    setProgress(100);
+    clearInterval(progressInterval);
+    // Manejar respuesta exitosa
+  } catch (error) {
+    clearInterval(progressInterval);
+    // Manejar error
+  } finally {
+    setLoading(false);
+  }
+}
+```
+
+#### 5. Validación de Formularios
+```javascript
+// Validar antes de enviar
+const validarFormulario = (datos) => {
+  const errores = {};
+
+  if (!datos.tema || datos.tema.length < 3) {
+    errores.tema = 'El tema debe tener al menos 3 caracteres';
+  }
+
+  if (datos.numeroSlides < 3 || datos.numeroSlides > 30) {
+    errores.numeroSlides = 'Debe ser entre 3 y 30 slides';
+  }
+
+  if (!['Español', 'English', 'French'].includes(datos.idioma)) {
+    errores.idioma = 'Idioma no soportado';
+  }
+
+  return errores;
+};
+```
+
+---
+
+## 🛠️ Scripts de Raíz (Utilidades)
+
+Los siguientes scripts están en la raíz del proyecto (se recomienda moverlos a `scripts/`):
+
+### `check-admin.js`
+**Verificar Usuarios Administradores**
+
+Lista todos los usuarios con rol `admin` o `soporte`:
+
+```bash
+node check-admin.js
+```
+
+**Output:**
+```
+=== USUARIOS ADMINISTRADORES ===
+1. Juan Pérez (juan.perez@instituto.edu) - admin - Activo
+2. María García (maria.garcia@instituto.edu) - soporte - Activo
+
+Total: 2 administradores
+```
+
+**Uso:** Auditoría rápida de quiénes tienen permisos elevados.
+
+---
+
+### `check-presentaciones.js`
+**Verificar Presentaciones en Base de Datos**
+
+Muestra estadísticas y estado de las presentaciones:
+
+```bash
+node check-presentaciones.js
+```
+
+**Output:**
+```
+=== ESTADÍSTICAS DE PRESENTACIONES ===
+Total: 324
+- Borradores: 120
+- Finalizadas: 180
+- Compartidas: 24
+
+Últimas 5 creadas:
+1. [ID: 324] Blockchain - Usuario: 5 - 2025-11-02
+2. [ID: 323] IA en Salud - Usuario: 12 - 2025-11-01
+...
+```
+
+**Uso:** Diagnóstico rápido del estado del sistema.
+
+---
+
+### `check-usuarios.js`
+**Listar Usuarios Registrados**
+
+Muestra todos los usuarios con sus datos básicos:
+
+```bash
+node check-usuarios.js
+
+# Filtrar por rol
+node check-usuarios.js --rol=usuario
+
+# Filtrar por estado
+node check-usuarios.js --estado=activo
+```
+
+**Output:**
+```
+=== USUARIOS REGISTRADOS ===
+ID  | Nombre              | Email                         | Rol     | Estado
+1   | Juan Pérez          | juan.perez@instituto.edu      | admin   | activo
+2   | María García        | maria.garcia@instituto.edu    | usuario | activo
+...
+
+Total: 47 usuarios
+```
+
+---
+
+### `create-groq-service.js`
+**Generador de Servicio Groq**
+
+Script auxiliar para regenerar o validar la configuración del servicio Groq:
+
+```bash
+node create-groq-service.js
+```
+
+**Uso:** Desarrollo y debugging del servicio de IA.
+
+---
+
+## 📦 Carpeta `lib/` Detallada
+
+### `ortografia.js` - Corrector Ortográfico
+
+**Propósito:** Validar y corregir ortografía en español antes de generar presentaciones.
+
+**Dependencias:**
+- `nspell`: Biblioteca de corrección ortográfica
+- `dictionary-es`: Diccionario español
+
+**Funciones principales:**
+```javascript
+// Verificar si una palabra está correcta
+function esPalabraCorrecta(palabra);
+
+// Obtener sugerencias para palabra incorrecta
+function obtenerSugerencias(palabra);
+
+// Corregir texto completo
+function corregirTexto(texto);
+```
+
+**Ejemplo de uso:**
+```javascript
+const ortografia = require('./lib/ortografia');
+
+const texto = 'Intelijencia Artificial en la educasion';
+const textoCo
+
+rregido = ortografia.corregirTexto(texto);
+// "Inteligencia Artificial en la educación"
+```
+
+---
+
+### `asyncHandler.js` - Wrapper de Errores
+
+**Propósito:** Envolver funciones async para manejar errores automáticamente sin try/catch repetitivos.
+
+**Implementación:**
+```javascript
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+module.exports = asyncHandler;
+```
+
+**Uso en rutas:**
+```javascript
+const asyncHandler = require('../lib/asyncHandler');
+
+// Sin asyncHandler (verbose)
+router.get('/presentaciones', async (req, res, next) => {
+  try {
+    const presentaciones = await presentacionService.listar();
+    res.json(presentaciones);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Con asyncHandler (limpio)
+router.get('/presentaciones', asyncHandler(async (req, res) => {
+  const presentaciones = await presentacionService.listar();
+  res.json(presentaciones);
+}));
+```
+
+---
+
+### `presentacionTopics.js` - Temas Sugeridos por Carrera
+
+**Propósito:** Proveer temas predefinidos organizados por carrera técnica para facilitar la creación de presentaciones.
+
+**Estructura:**
+```javascript
+module.exports = {
+  'software': [
+    'Arquitectura de Microservicios',
+    'Desarrollo Full Stack con MERN',
+    'DevOps y CI/CD',
+    'Machine Learning Básico',
+    'Seguridad en Aplicaciones Web',
+    'Patrones de Diseño en JavaScript'
+  ],
+  'maquinaria': [
+    'Mantenimiento Predictivo',
+    'Sistemas Hidráulicos Industriales',
+    'Automatización de Procesos',
+    'Gestión de Activos',
+    'Lubricación Industrial'
+  ],
+  'mecatronica': [
+    'Robótica Industrial',
+    'IoT y Sensores Inteligentes',
+    'Sistemas de Control Automatizado',
+    'Industria 4.0',
+    'Impresión 3D y Prototipado'
+  ],
+  'quimica': [
+    'Procesos de Refinación',
+    'Seguridad en Laboratorios',
+    'Química Analítica Instrumental',
+    'Tratamiento de Aguas Residuales',
+    'Nanotecnología Aplicada'
+  ]
+};
+```
+
+**Uso en frontend:**
+```javascript
+// Mostrar sugerencias al usuario según su carrera
+const temas = presentacionTopics[usuarioCarrera];
+```
+
+---
+
+## 🔍 Verificación Final de Cobertura
+
+### ✅ Arquitectura y Diseño
+- [x] Diagramas de arquitectura
+- [x] Flujos de datos (OAuth, generación, autorización)
+- [x] Patrones de diseño (MVC, Service Layer, Factory, etc.)
+- [x] Estructura de carpetas COMPLETA con nuevas adiciones
+
+### ✅ Configuración
+- [x] Variables de entorno exhaustivas
+- [x] PostgreSQL (conexión, pool, SSL, CA certificates)
+- [x] OAuth Google paso a paso
+- [x] Servicios IA (Groq, Gemini, fallback)
+
+### ✅ Deployment
+- [x] Local (paso a paso)
+- [x] Docker (Dockerfile + docker-compose)
+- [x] DigitalOcean App Platform
+- [x] DigitalOcean Droplet (VPS manual)
+- [x] Render (Blueprint y manual)
+
+### ✅ API Completa
+- [x] TODOS los endpoints documentados
+- [x] Headers, body, responses, errores
+- [x] Ejemplos de código frontend
+
+### ✅ Servicios y Lógica
+- [x] Groq (prompts, modelos, respuestas)
+- [x] Gemini (fallback, optimización, guardado)
+- [x] PPTX generation completa
+- [x] Flujo end-to-end de generación
+
+### ✅ Seguridad
+- [x] JWT (generación, validación)
+- [x] CORS (configuración, troubleshooting)
+- [x] OAuth (setup completo)
+- [x] Helmet, Rate Limiting, Sanitización
+
+### ✅ Roles y Permisos
+- [x] 3 roles (usuario, admin, soporte)
+- [x] Middleware de autorización
+- [x] Ejemplos de uso
+
+### ✅ Troubleshooting
+- [x] 20+ problemas comunes con soluciones
+- [x] Database (connections, SSL, timeouts)
+- [x] Auth (OAuth, JWT, whitelist)
+- [x] IA (rate limits, modelos, errors)
+- [x] CORS, PPTX, Performance, Deployment
+
+### ✅ Operaciones
+- [x] Logs y debugging
+- [x] Scripts útiles (12+ documentados)
+- [x] Mejores prácticas (seguridad, performance, mantenibilidad)
+- [x] Backups y recuperación
+
+### ✅ Recursos
+- [x] FAQ (30+ preguntas)
+- [x] Documentación complementaria (links a archivos markdown)
+- [x] Archivos adicionales (CODE_OF_CONDUCT, CONTRIBUTING, etc.)
+- [x] Changelog
+- [x] Licencia y créditos
+
+### ✅ Utilidades (`lib/`)
+- [x] ortografia.js (corrector)
+- [x] pptFonts.js (fuentes)
+- [x] pptImages.js (procesamiento)
+- [x] pptThemes.js (plantillas)
 │   ├── test-middleware-suspended.js     # Prueba usuarios suspendidos
 │   ├── test-reportes-backend.js         # Prueba endpoints reportes
 │   └── test-suspended-user.js           # Prueba suspensión usuario
