@@ -10,59 +10,59 @@
 ## 📑 Índice Completo
 
 ### 🚀 Inicio Rápido
-- [Resumen Ejecutivo](#resumen-ejecutivo)
-- [Características Principales](#características-principales)
-- [Tecnologías Utilizadas](#tecnologías-utilizadas)
-- [Requisitos del Sistema](#requisitos-del-sistema)
+- [Resumen Ejecutivo](#-resumen-ejecutivo)
+- [Características Principales](#-características-principales)
+- [Tecnologías Utilizadas](#️-tecnologías-utilizadas)
+- [Requisitos del Sistema](#-requisitos-del-sistema)
 
 ### 🏗️ Arquitectura y Diseño
-- [Visión General de la Arquitectura](#visión-general-de-la-arquitectura)
-- [Estructura de Carpetas](#estructura-de-carpetas-detallada)
-- [Flujo de Datos](#flujo-de-datos)
-- [Patrones de Diseño](#patrones-de-diseño)
+- [Visión General de la Arquitectura](#️-visión-general-de-la-arquitectura)
+- [Estructura de Carpetas](#-estructura-de-carpetas-detallada)
+- [Flujo de Datos](#-flujo-de-datos)
+- [Patrones de Diseño](#-patrones-de-diseño)
 
 ### ⚙️ Configuración
-- [Variables de Entorno](#variables-de-entorno-completas)
-- [Configuración de Base de Datos](#configuración-de-base-de-datos)
-- [Configuración de OAuth](#configuración-de-oauth-con-google)
-- [Configuración de Servicios IA](#configuración-de-servicios-ia)
+- [Variables de Entorno](#️-variables-de-entorno-completas)
+- [Configuración de Base de Datos](#️-configuración-de-base-de-datos)
+- [Configuración de OAuth](#-configuración-de-oauth-con-google)
+- [Configuración de Servicios IA](#-configuración-de-servicios-ia)
 
 ### 🔧 Instalación y Despliegue
-- [Instalación Local](#instalación-local)
-- [Despliegue en Producción](#despliegue-en-producción)
-- [Despliegue con Docker](#despliegue-con-docker)
-- [Despliegue en DigitalOcean](#despliegue-en-digitalocean)
-- [Despliegue en Render](#despliegue-en-render)
+- [Instalación Local](#-instalación-local)
+- [Despliegue en Producción](#-despliegue-en-producción)
+- [Despliegue con Docker](#-despliegue-con-docker)
+- [Despliegue en DigitalOcean](#️-despliegue-en-digitalocean)
+- [Despliegue en Render](#-despliegue-en-render)
 
 ### 📡 API y Endpoints
-- [Autenticación y Seguridad](#autenticación-y-seguridad)
-- [Endpoints de Autenticación](#endpoints-de-autenticación)
-- [Endpoints de Presentaciones](#endpoints-de-presentaciones)
-- [Endpoints de Administración](#endpoints-de-administración)
-- [Endpoints de Reportes y Soporte](#endpoints-de-reportes-y-soporte)
+- [Autenticación y Seguridad](#-autenticación-y-seguridad)
+- [Endpoints de Autenticación](#-endpoints-de-autenticación)
+- [Endpoints de Presentaciones](#-endpoints-de-presentaciones)
+- [Endpoints de Administración](#-endpoints-de-administración)
+- [Endpoints de Reportes y Soporte](#️-endpoints-de-reportes-y-soporte)
 
 ### 🤖 Servicios de IA
-- [Servicio Groq (Texto)](#servicio-groq-texto)
-- [Servicio Gemini (Imágenes)](#servicio-gemini-imágenes)
-- [Generación de Presentaciones](#generación-de-presentaciones)
-- [Exportación a PPTX](#exportación-a-pptx)
+- [Servicio Groq (Texto)](#-servicio-groq-texto)
+- [Servicio Gemini (Imágenes)](#-servicio-gemini-imágenes)
+- [Generación de Presentaciones](#-generación-de-presentaciones-flujo-completo)
+- [Exportación a PPTX](#-exportación-a-pptx)
 
 ### 👥 Gestión de Usuarios y Roles
-- [Sistema de Roles](#sistema-de-roles)
-- [Permisos y Autorización](#permisos-y-autorización)
-- [Administración de Usuarios](#administración-de-usuarios)
+- [Sistema de Roles](#-sistema-de-roles)
+- [Permisos y Autorización](#-permisos-y-autorización)
+- [Administración de Usuarios](#-administración-de-usuarios)
 
 ### 🛠️ Mantenimiento y Operaciones
-- [Monitoreo y Logs](#monitoreo-y-logs)
-- [Modo Mantenimiento](#modo-mantenimiento)
-- [Respaldos y Recuperación](#respaldos-y-recuperación)
-- [Solución de Problemas](#solución-de-problemas-detallada)
+- [Monitoreo y Logs](#-monitoreo-y-logs)
+- [Modo Mantenimiento](#-modo-mantenimiento)
+- [Respaldos y Recuperación](#-respaldos-y-recuperación)
+- [Solución de Problemas](#-solución-de-problemas-detallada)
 
 ### 📚 Recursos Adicionales
-- [Scripts Útiles](#scripts-útiles)
-- [Mejores Prácticas](#mejores-prácticas)
-- [FAQ](#preguntas-frecuentes-faq)
-- [Documentación Complementaria](#documentación-complementaria)
+- [Scripts Útiles](#️-scripts-útiles)
+- [Mejores Prácticas](#-mejores-prácticas)
+- [FAQ](#-preguntas-frecuentes-faq)
+- [Documentación Complementaria](#-documentación-complementaria)
 
 ---
 
