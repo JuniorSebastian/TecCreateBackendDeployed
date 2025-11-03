@@ -1,22 +1,2064 @@
-# TecCreate Backend
+# 🎯 TecCreate Backend - Documentación Completa
 
-Backend en Node.js/Express para generar presentaciones asistidas por IA, integrando autenticación con Google OAuth, PostgreSQL, Groq (texto) y Gemini (imágenes). Este README explica cómo instalar, configurar, desplegar y operar todo el backend.
+**Backend empresarial en Node.js/Express para generación de presentaciones asistidas por IA** con autenticación institucional, multi-tenant, roles avanzados y exportación PPTX profesional. Integra Google OAuth 2.0, PostgreSQL, Groq (generación de texto), Gemini (generación de imágenes) y arquitectura modular escalable.
 
-## Índice
+---
 
-- [Características principales](#características-principales)
-- [Arquitectura](#arquitectura)
-- [Requisitos](#requisitos)
-- [Variables de entorno](#variables-de-entorno)
-- [Configuración de la base de datos](#configuración-de-la-base-de-datos)
-- [Ejecución local](#ejecución-local)
-- [Guía paso a paso de despliegue](#guía-paso-a-paso-de-despliegue)
-- [Despliegue](#despliegue)
-  - [Render (Blueprint incluido)](#render-blueprint-incluido)
-  - [Servidor propio / on-premise](#servidor-propio--on-premise)
-- [OAuth con Google](#oauth-con-google)
-- [Flujo funcional principal](#flujo-funcional-principal)
-- [API resumida](#api-resumida)
+## 📑 Índice Completo
+
+### 🚀 Inicio Rápido
+- [Resumen Ejecutivo](#-resumen-ejecutivo)
+- [Características Principales](#-características-principales)
+- [Tecnologías Utilizadas](#-tecnologías-utilizadas)
+- [Requisitos del Sistema](#-requisitos-del-sistema)
+
+### 🏗️ Arquitectura y Diseño
+- [Visión General de la Arquitectura](#-visión-general-de-la-arquitectura)
+- [Estructura de Carpetas](#-estructura-de-carpetas-detallada)
+- [Flujo de Datos](#-flujo-de-datos)
+- [Patrones de Diseño](#-patrones-de-diseño)
+
+### ⚙️ Configuración
+- [Variables de Entorno](#-variables-de-entorno-completas)
+- [Configuración de Base de Datos](#-configuración-de-base-de-datos)
+- [Configuración de OAuth](#-configuración-de-oauth-con-google)
+- [Configuración de Servicios IA](#-configuración-de-servicios-ia)
+
+### 🔧 Instalación y Despliegue
+- [Instalación Local](#-instalación-local)
+- [Despliegue en Producción](#-despliegue-en-producción)
+- [Despliegue con Docker](#-despliegue-con-docker)
+- [Despliegue en DigitalOcean](#-despliegue-en-digitalocean)
+- [Despliegue en Render](#-despliegue-en-render)
+
+### 📡 API y Endpoints
+- [Autenticación y Seguridad](#-autenticación-y-seguridad)
+- [Endpoints de Autenticación](#-endpoints-de-autenticación)
+- [Endpoints de Presentaciones](#-endpoints-de-presentaciones)
+- [Endpoints de Administración](#-endpoints-de-administración)
+- [Endpoints de Reportes y Soporte](#-endpoints-de-reportes-y-soporte)
+
+### 🤖 Servicios de IA
+- [Servicio Groq (Texto)](#-servicio-groq-texto)
+- [Servicio Gemini (Imágenes)](#-servicio-gemini-imágenes)
+- [Generación de Presentaciones](#-generación-de-presentaciones)
+- [Exportación a PPTX](#-exportación-a-pptx)
+
+### 👥 Gestión de Usuarios y Roles
+- [Sistema de Roles](#-sistema-de-roles)
+- [Permisos y Autorización](#-permisos-y-autorización)
+- [Administración de Usuarios](#-administración-de-usuarios)
+
+### 🛠️ Mantenimiento y Operaciones
+- [Monitoreo y Logs](#-monitoreo-y-logs)
+- [Modo Mantenimiento](#-modo-mantenimiento)
+- [Respaldos y Recuperación](#-respaldos-y-recuperación)
+- [Solución de Problemas](#-solución-de-problemas-detallada)
+
+### 📚 Recursos Adicionales
+- [Scripts Útiles](#-scripts-útiles)
+- [Mejores Prácticas](#-mejores-prácticas)
+- [FAQ](#-preguntas-frecuentes-faq)
+- [Documentación Complementaria](#-documentación-complementaria)
+
+---
+
+## 🎯 Resumen Ejecutivo
+
+**TecCreate Backend** es una plataforma empresarial robusta diseñada para instituciones educativas que permite a profesores y coordinadores generar presentaciones profesionales asistidas por IA en minutos. El sistema maneja autenticación institucional, control de acceso basado en roles, generación de contenido con IA, exportación a formatos estándar y administración centralizada.
+
+### ¿Por qué TecCreate?
+
+✅ **Autenticación Institucional**: Integración con Google Workspace para control de acceso seguro  
+✅ **IA Avanzada**: Generación de contenido con Groq (70B parámetros) e imágenes con Gemini  
+✅ **Multi-idioma**: Soporte para Español, English y Français  
+✅ **Plantillas Profesionales**: 7 temas visuales optimizados para carreras técnicas  
+✅ **Escalable**: Arquitectura modular preparada para crecimiento institucional  
+✅ **Seguro**: JWT, CORS configurado, SSL/TLS, protección contra ataques comunes  
+
+---
+
+## 🌟 Características Principales
+
+### 🔐 Autenticación y Seguridad
+- **Google OAuth 2.0**: Integración completa con Google Workspace institucional
+- **JWT (JSON Web Tokens)**: Autenticación stateless con tokens firmados
+- **Control de Acceso Basado en Roles (RBAC)**: 3 roles (Usuario, Admin, Soporte)
+- **Whitelist de Correos**: Solo correos institucionales preaprobados
+- **Sesiones Seguras**: express-session con cookies httpOnly, secure y sameSite
+- **CORS Configurado**: Protección contra peticiones no autorizadas
+- **Rate Limiting**: Protección contra ataques de fuerza bruta (opcional)
+
+### 🤖 Inteligencia Artificial
+- **Groq SDK**: Generación de contenido textual con modelos LLaMA 3 (70B parámetros)
+- **Google Gemini**: Generación de imágenes temáticas con modelos flash
+- **Sistema de Fallback**: Cambio automático entre modelos si uno falla
+- **3 Niveles de Detalle**: Brief, Medium, Detailed
+- **3 Estilos de Escritura**: Professional, Casual, Academic
+- **3 Idiomas**: Español, English, Français
+- **Generación Inteligente**: Prompts optimizados para contexto educativo
+
+### 📊 Gestión de Presentaciones
+- **Creación Manual o IA**: Esquemas propios o generados automáticamente
+- **Edición Completa**: Modificar título, slides, bullets, imágenes
+- **Exportación PPTX**: Generación de archivos PowerPoint profesionales
+- **7 Plantillas Visuales**: Temas para carreras (Software, Mecatrónica, Química, etc.)
+- **Compartir Público**: Enlaces compartibles con QR descargable
+- **Historial**: Registro completo de creación y modificaciones
+- **Búsqueda y Filtros**: Buscar por tema, fecha, tags
+
+### 👥 Administración
+- **Dashboard Completo**: Métricas, tendencias, estadísticas en tiempo real
+- **Gestión de Usuarios**: CRUD completo con cambio de roles
+- **Reportes de Soporte**: Sistema de tickets con prioridades
+- **Modo Mantenimiento**: Bloquear acceso a usuarios durante actualizaciones
+- **Logs de Actividad**: Auditoría completa de acciones críticas
+- **Notificaciones**: Sistema de alertas para administradores
+
+### 📦 Arquitectura Técnica
+- **Express 5.x**: Framework web moderno y robusto
+- **PostgreSQL**: Base de datos relacional con índices optimizados
+- **Connection Pool**: Gestión eficiente de conexiones DB
+- **Arquitectura MVC**: Separación clara de responsabilidades
+- **Servicios Modulares**: Lógica de negocio encapsulada
+- **Middleware Pipeline**: Autenticación, validación, manejo de errores
+- **Healthchecks**: Endpoint de salud para orquestadores
+- **Graceful Shutdown**: Cierre limpio de conexiones
+
+---
+
+## 🛠️ Tecnologías Utilizadas
+
+### Backend Core
+```json
+{
+  "runtime": "Node.js 18+ LTS",
+  "framework": "Express 5.1.0",
+  "language": "JavaScript (CommonJS)",
+  "architecture": "MVC + Services"
+}
+```
+
+### Base de Datos
+```json
+{
+  "database": "PostgreSQL 14+",
+  "driver": "pg (node-postgres)",
+  "pooling": "pg.Pool",
+  "migrations": "SQL scripts"
+}
+```
+
+### Autenticación
+```json
+{
+  "oauth": "Google OAuth 2.0",
+  "strategy": "Passport.js (passport-google-oauth20)",
+  "tokens": "jsonwebtoken (JWT)",
+  "sessions": "express-session"
+}
+```
+
+### Servicios IA
+```json
+{
+  "text_generation": "Groq SDK (groq-sdk)",
+  "image_generation": "Google Gemini (GenerativeAI)",
+  "models_text": ["llama3-70b-8192", "mixtral-8x7b-32768"],
+  "models_image": ["gemini-2.0-flash-preview-image-generation", "gemini-2.5-flash-image"]
+}
+```
+
+### Exportación y Procesamiento
+```json
+{
+  "pptx_generation": "pptxgenjs",
+  "image_processing": "sharp",
+  "qr_codes": "qrcode"
+}
+```
+
+### Seguridad y Middleware
+```json
+{
+  "cors": "cors",
+  "helmet": "helmet (opcional)",
+  "compression": "compression (opcional)",
+  "rate_limiting": "express-rate-limit (opcional)",
+  "logging": "pino / pino-http (opcional)"
+}
+```
+
+---
+
+## 💻 Requisitos del Sistema
+
+### Requisitos Mínimos (Desarrollo Local)
+- **Node.js**: 18.17.0 o superior (LTS recomendado: 20.x)
+- **npm**: 9.0.0 o superior
+- **PostgreSQL**: 14.0 o superior
+- **RAM**: 2 GB disponibles
+- **Disco**: 500 MB libres (sin node_modules)
+- **SO**: Windows 10+, macOS 12+, Ubuntu 20.04+
+
+### Requisitos Recomendados (Producción)
+- **Node.js**: 20.x LTS
+- **npm**: 10.x
+- **PostgreSQL**: 15+ (o servicio gestionado)
+- **RAM**: 4 GB+ (según tráfico)
+- **CPU**: 2+ cores
+- **Disco**: 10 GB+ (logs, imágenes generadas, backups)
+- **Red**: HTTPS obligatorio, dominio configurado
+
+### Cuentas y Servicios Externos
+- ✅ **Google Cloud Console**: Proyecto con OAuth 2.0 configurado
+- ✅ **Groq API**: Cuenta y API Key ([groq.com](https://groq.com))
+- ✅ **Google AI Studio**: API Key para Gemini ([aistudio.google.com](https://aistudio.google.com/apikey))
+- ✅ **PostgreSQL**: Instancia local o gestionada (DigitalOcean, Render, AWS RDS, etc.)
+- 🔄 **Redis** (Opcional): Para sesiones en producción multi-instancia
+
+---
+
+## 🏗️ Visión General de la Arquitectura
+
+### Diagrama de Arquitectura
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          CLIENTE (Frontend)                          │
+│                     React/Vue/Angular + Axios                        │
+└────────────────────────┬────────────────────────────────────────────┘
+                         │ HTTPS + JWT
+                         ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       REVERSE PROXY (Nginx)                          │
+│                    SSL/TLS Termination + CORS                        │
+└────────────────────────┬────────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        EXPRESS SERVER (Node.js)                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                      MIDDLEWARE PIPELINE                      │  │
+│  │  1. CORS  2. Helmet  3. Compression  4. Rate Limit  5. Auth  │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                           RUTAS                               │  │
+│  │  /auth  /presentaciones  /admin  /reportes  /soporte         │  │
+│  └──────────────────────┬───────────────────────────────────────┘  │
+│                         ▼                                            │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                       CONTROLLERS                             │  │
+│  │  authController  presentacionesController  adminController    │  │
+│  └──────────────────────┬───────────────────────────────────────┘  │
+│                         ▼                                            │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │                        SERVICES                               │  │
+│  │  groqService  geminiService  pptService  presentacionService  │  │
+│  └──────────────────────┬───────────────────────────────────────┘  │
+└──────────────────────────┼──────────────────────────────────────────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│  PostgreSQL  │  │   Groq API   │  │  Gemini API  │
+│   Database   │  │  (Text Gen)  │  │  (Img Gen)   │
+└──────────────┘  └──────────────┘  └──────────────┘
+```
+
+### Flujo de Peticiones
+
+1. **Cliente** → Envía petición HTTPS con JWT en header `Authorization: Bearer <token>`
+2. **Nginx** → Valida SSL, aplica CORS, redirige a Express
+3. **Express Middleware** → Valida JWT, verifica permisos de rol
+4. **Controller** → Recibe petición, valida datos, delega a Services
+5. **Service** → Ejecuta lógica de negocio, consulta DB o APIs externas
+6. **Response** → Devuelve JSON estructurado al cliente
+
+### Capas de la Aplicación
+
+```
+┌─────────────────────────────────────────┐
+│      ROUTES (routes/)                   │  ← Define endpoints y métodos HTTP
+├─────────────────────────────────────────┤
+│      MIDDLEWARE (middlewares/)          │  ← Autenticación, roles, validación
+├─────────────────────────────────────────┤
+│      CONTROLLERS (controllers/)         │  ← Maneja req/res, orquesta lógica
+├─────────────────────────────────────────┤
+│      SERVICES (services/)               │  ← Lógica de negocio pura
+├─────────────────────────────────────────┤
+│      DATABASE (db.js)                   │  ← Connection pool PostgreSQL
+└─────────────────────────────────────────┘
+```
+
+---
+
+## 📁 Estructura de Carpetas Detallada
+
+```
+backend/
+│
+├── 📄 index.js                          # Punto de entrada principal
+├── 📄 db.js                             # Pool de conexiones PostgreSQL
+├── 📄 database.js                       # Helper de conexión (legacy)
+├── 📄 package.json                      # Dependencias y scripts npm
+├── 📄 .env                              # Variables de entorno (NO VERSIONAR)
+├── 📄 .env.example                      # Plantilla de variables
+├── 📄 .gitignore                        # Archivos excluidos de Git
+├── 📄 README.md                         # Este archivo
+├── 📄 render.yaml                       # Blueprint para Render (opcional)
+├── 📄 estructura_presentador_ia.sql     # Schema completo de PostgreSQL
+│
+├── 📁 config/                           # Configuraciones
+│   └── passport.js                      # Estrategia Google OAuth 2.0
+│
+├── 📁 routes/                           # Definición de rutas
+│   ├── authRoutes.js                    # /auth/* (login, callback, logout)
+│   ├── presentacionesRoutes.js          # /presentaciones/* (CRUD, export)
+│   ├── adminRoutes.js                   # /admin/* (dashboard, usuarios)
+│   ├── reportesRoutes.js                # /reportes/* (soporte)
+│   └── soporteRoutes.js                 # /soporte/* (mantenimiento, logs)
+│
+├── 📁 controllers/                      # Controladores (req/res handling)
+│   ├── adminController.js               # Lógica admin (dashboard, usuarios)
+│   ├── presentacionesController.js      # Lógica presentaciones
+│   ├── reportesController.js            # Lógica reportes soporte
+│   ├── soporteController.js             # Modo mantenimiento, logs
+│   └── usuariosAdminController.js       # CRUD usuarios (admin)
+│
+├── 📁 services/                         # Lógica de negocio pura
+│   ├── groqService.js                   # Generación texto con Groq
+│   ├── geminiService.js                 # Generación imágenes con Gemini
+│   ├── groqClient.js                    # Cliente Groq configurado
+│   ├── pptService.js                    # Generación archivos PPTX
+│   ├── presentacionService.js           # Lógica CRUD presentaciones
+│   ├── slideGeneratorService.js         # Orquestador de generación IA
+│   ├── dashboardService.js              # Métricas y estadísticas
+│   ├── usuariosService.js               # Lógica usuarios
+│   ├── reportesService.js               # Lógica reportes
+│   ├── soporteService.js                # Mantenimiento y notificaciones
+│   └── maintenanceService.js            # Modo mantenimiento
+│
+├── 📁 middlewares/                      # Middleware personalizados
+│   ├── authMiddleware.js                # Validación JWT
+│   └── roleMiddleware.js                # Validación de roles
+│
+├── 📁 utils/                            # Utilidades y helpers
+│   ├── ortografia.js                    # Corrección ortográfica
+│   ├── pptFonts.js                      # Fuentes personalizadas PPTX
+│   ├── pptImages.js                     # Procesamiento imágenes
+│   ├── pptThemes.js                     # Plantillas visuales (7 temas)
+│   ├── presentaciones.js                # Helpers presentaciones
+│   ├── presentacionTopics.js            # Temas sugeridos por carrera
+│   └── supportReports.js                # Helpers reportes
+│
+├── 📁 public/                           # Archivos estáticos públicos
+│   ├── images/slides/                   # Imágenes generadas por Gemini
+│   └── shared-presentaciones/           # PPTX compartidos públicamente
+│
+├── 📁 docs/                             # Documentación complementaria
+│   ├── gestion-usuarios.md              # Guía gestión usuarios
+│   ├── roles-permissions.md             # Matriz roles y permisos
+│   ├── Backend-Manual.md                # Manual técnico completo
+│   └── Manual-Usuario-Backend.md        # Manual operativo usuarios
+│
+├── 📁 scripts/                          # Scripts de utilidad
+│   ├── clear-support-logs.js            # Limpia logs antiguos
+│   ├── list-reportes.js                 # Lista reportes en DB
+│   ├── query-user.js                    # Consulta usuario por email
+│   ├── seed-support-logs.js             # Genera datos de prueba
+│   ├── test-maintenance-gate.js         # Prueba modo mantenimiento
+│   ├── test-middleware-suspended.js     # Prueba usuarios suspendidos
+│   ├── test-reportes-backend.js         # Prueba endpoints reportes
+│   └── test-suspended-user.js           # Prueba suspensión usuario
+│
+└── 📁 archive/                          # Archivos archivados (backups)
+    └── cleanup-20251102/                # Limpieza Nov 2025
+        ├── services_groqService-corrupted.js
+        ├── services_groqService-clean.js
+        └── services_groqService.js.backup.txt
+```
+
+### Explicación de Carpetas Clave
+
+#### **`routes/`** - Definición de Endpoints
+Cada archivo define un conjunto de rutas relacionadas:
+- Importa el controller correspondiente
+- Define métodos HTTP (GET, POST, PUT, PATCH, DELETE)
+- Aplica middlewares específicos (auth, roles)
+- Exporta el router para ser montado en `index.js`
+
+#### **`controllers/`** - Orquestación de Peticiones
+Funciones que:
+- Reciben `req` y `res` de Express
+- Validan parámetros y body
+- Llaman a services para lógica de negocio
+- Manejan errores con try/catch
+- Envían respuestas JSON estructuradas
+
+#### **`services/`** - Lógica de Negocio Pura
+Funciones sin dependencia de req/res:
+- Consultas a base de datos
+- Llamadas a APIs externas (Groq, Gemini)
+- Transformaciones de datos
+- Validaciones de negocio
+- Reutilizables desde múltiples controllers
+
+#### **`middlewares/`** - Interceptores de Peticiones
+- **authMiddleware.js**: Valida JWT, extrae usuario, bloquea no autenticados
+- **roleMiddleware.js**: Factory de middleware para validar roles específicos
+
+#### **`utils/`** - Helpers y Configuraciones
+Módulos auxiliares sin estado:
+- Configuraciones de plantillas PPTX
+- Procesamiento de imágenes
+- Corrección de texto
+- Constantes y mapeos
+
+---
+
+## 🔄 Flujo de Datos
+
+### 1. Flujo de Autenticación (OAuth)
+---
+
+## 🔄 Flujo de Datos
+
+### 1. Flujo de Autenticación (OAuth)
+
+```
+Usuario                 Frontend              Backend              Google OAuth          PostgreSQL
+  │                        │                     │                      │                     │
+  │  Click "Login"         │                     │                      │                     │
+  ├────────────────────────>                     │                      │                     │
+  │                        │  GET /auth/google   │                      │                     │
+  │                        ├─────────────────────>                      │                     │
+  │                        │                     │  Redirect to Google  │                     │
+  │                        │                     ├──────────────────────>                     │
+  │                        │                     │                      │                     │
+  │  Login en Google       │                     │                      │                     │
+  ├────────────────────────┼─────────────────────┼──────────────────────>                     │
+  │                        │                     │                      │                     │
+  │                        │                     │ GET /auth/google/callback?code=XXX         │
+  │                        │                     <──────────────────────┤                     │
+  │                        │                     │                      │                     │
+  │                        │                     │  Exchange code       │                     │
+  │                        │                     ├──────────────────────>                     │
+  │                        │                     │  Return profile      │                     │
+  │                        │                     <──────────────────────┤                     │
+  │                        │                     │                      │                     │
+  │                        │                     │  Verificar email whitelist                 │
+  │                        │                     ├────────────────────────────────────────────>
+  │                        │                     │  Crear/actualizar usuario                  │
+  │                        │                     <────────────────────────────────────────────┤
+  │                        │                     │                      │                     │
+  │                        │                     │  Generar JWT         │                     │
+  │                        │  Redirect con token │                      │                     │
+  │                        <─────────────────────┤                      │                     │
+  │  Guarda JWT            │                     │                      │                     │
+  <────────────────────────┤                     │                      │                     │
+```
+
+### 2. Flujo de Generación de Presentación
+
+```
+1. Usuario solicita generar presentación
+   POST /presentaciones/generar
+   Body: { tema, idioma, numeroSlides, detailLevel, estilo }
+   Header: Authorization: Bearer <JWT>
+
+2. Backend valida JWT y extrae usuario_id
+
+3. Backend llama a groqService.generarEsquema()
+   ├─> Construye prompt con parámetros
+   ├─> Envía a Groq API (llama3-70b-8192)
+   └─> Recibe JSON con estructura de slides
+
+4. Backend guarda presentación en PostgreSQL
+   INSERT INTO presentaciones (usuario_id, tema, esquema_json, ...)
+
+5. (Opcional) Usuario solicita generar imágenes
+   POST /presentaciones/:id/imagenes
+   
+6. Backend llama a geminiService.generarImagen() por cada slide
+   ├─> Envía prompt a Gemini API
+   ├─> Recibe imagen en base64
+   ├─> Guarda en public/images/slides/
+   └─> Inserta registro en tabla imagenes
+
+7. Usuario solicita exportar
+   GET /presentaciones/:id/export
+
+8. Backend llama a pptService.generarPresentacion()
+   ├─> Lee esquema_json de PostgreSQL
+   ├─> Aplica plantilla visual (pptThemes)
+   ├─> Inserta imágenes si existen
+   ├─> Genera archivo PPTX en memoria
+   └─> Envía como attachment
+
+9. Usuario descarga archivo .pptx
+```
+
+### 3. Flujo de Autorización por Roles
+
+```
+Request: PUT /admin/usuarios/123 (cambiar rol de usuario)
+  │
+  ▼
+authMiddleware.verificarToken()
+  │ ├─ Extrae token del header
+  │ ├─ Verifica firma con JWT_SECRET
+  │ ├─ Decodifica payload { usuario_id, email, rol }
+  │ └─ Adjunta req.usuario
+  ▼
+roleMiddleware.verificarRol(['admin', 'soporte'])
+  │ ├─ Lee req.usuario.rol
+  │ ├─ Compara con roles permitidos
+  │ └─ Si no coincide → 403 Forbidden
+  ▼
+usuariosAdminController.actualizarUsuario()
+  │ ├─ Valida parámetros
+  │ ├─ Llama a usuariosService.actualizarRol()
+  │ └─ Retorna { message: "Usuario actualizado", usuario }
+  ▼
+Response 200 OK
+```
+
+---
+
+## 🎨 Patrones de Diseño
+
+### 1. **MVC (Model-View-Controller)**
+- **Model**: PostgreSQL + queries en services
+- **View**: JSON responses (no templates server-side)
+- **Controller**: Orquestación en `controllers/`
+
+### 2. **Service Layer Pattern**
+Separación de lógica de negocio de controllers:
+```javascript
+// ❌ MAL: Lógica en controller
+router.post('/presentaciones', async (req, res) => {
+  const result = await db.query('INSERT INTO presentaciones...');
+  // Lógica compleja aquí
+});
+
+// ✅ BIEN: Controller delega a service
+router.post('/presentaciones', presentacionesController.crear);
+// Controller llama a presentacionService.crear()
+```
+
+### 3. **Factory Pattern** (Middleware de Roles)
+```javascript
+// roleMiddleware.js
+const verificarRol = (rolesPermitidos) => {
+  return (req, res, next) => {
+    if (rolesPermitidos.includes(req.usuario.rol)) {
+      return next();
+    }
+    return res.status(403).json({ error: 'Sin permisos' });
+  };
+};
+
+// Uso
+router.get('/admin/dashboard', verificarRol(['admin']), controller.dashboard);
+```
+
+### 4. **Singleton Pattern** (Database Pool)
+```javascript
+// db.js
+const { Pool } = require('pg');
+const pool = new Pool({ /* config */ });
+module.exports = pool; // Una única instancia compartida
+```
+
+### 5. **Strategy Pattern** (Generación IA)
+Diferentes estrategias de generación según parámetros:
+```javascript
+// groqService.js
+function construirPrompt(tema, idioma, detailLevel, estilo) {
+  const estrategias = {
+    'Brief': () => '3 bullets, 8-12 words each',
+    'Medium': () => '4 bullets, 10-18 words each',
+    'Detailed': () => '5 bullets, 15-25 words each'
+  };
+  return estrategias[detailLevel]();
+}
+```
+
+---
+
+## ⚙️ Variables de Entorno Completas
+
+Crea un archivo `.env` en la raíz del proyecto (usa `.env.example` como referencia):
+
+```bash
+# ============================================
+# ENTORNO Y SERVIDOR
+# ============================================
+NODE_ENV=production                          # development | production | test
+HOST=0.0.0.0                                 # 0.0.0.0 escucha en todas las interfaces
+PORT=3001                                    # Puerto del servidor Express
+
+# ============================================
+# URLs Y DOMINIOS
+# ============================================
+PUBLIC_BASE_URL=https://api.teccreate.edu    # URL pública del backend
+CLIENT_URL=https://app.teccreate.edu         # URL del frontend (para redirecciones)
+ALLOWED_ORIGINS=https://app.teccreate.edu,https://api.teccreate.edu  # CORS origins (separados por coma)
+
+# ============================================
+# BASE DE DATOS POSTGRESQL
+# ============================================
+DATABASE_URL=postgresql://usuario:password@host:5432/teccreate  # Connection string completa
+DATABASE_SSL=true                            # true para conexiones TLS (producción)
+DATABASE_SSL_ALLOW_SELF_SIGNED=false         # ⚠️ Solo para desarrollo, NO usar en producción
+DATABASE_SSL_CA_B64=LS0tLS1CRUdJTi...        # Certificado CA en base64 (opcional, recomendado)
+
+# Pool de conexiones (ajustar según plan de PostgreSQL)
+PGPOOL_MAX=3                                 # Máximo de conexiones simultáneas
+PGPOOL_IDLE_TIMEOUT=10000                    # Tiempo antes de cerrar conexión idle (ms)
+PGPOOL_CONNECTION_TIMEOUT=5000               # Timeout de conexión (ms)
+
+# ============================================
+# SEGURIDAD Y AUTENTICACIÓN
+# ============================================
+SESSION_SECRET=genera-un-string-aleatorio-seguro-min-32-caracteres
+JWT_SECRET=otra-clave-aleatoria-diferente-para-firmar-tokens
+JWT_EXPIRES_IN=1d                            # Duración del JWT (1d = 1 día, 7d = 7 días)
+
+# Whitelist de correos institucionales permitidos (separados por coma)
+ADMIN_EMAILS=coordinador@instituto.edu,director@instituto.edu,soporte@instituto.edu
+
+# ============================================
+# GOOGLE OAUTH 2.0
+# ============================================
+GOOGLE_CLIENT_ID=123456789-abcdefg.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-abcd1234
+GOOGLE_CALLBACK_URL=https://api.teccreate.edu/auth/google/callback
+
+# ============================================
+# SERVICIOS DE IA
+# ============================================
+# Groq (Generación de texto)
+GROQ_API_KEY=gsk_abcd1234efgh5678ijkl  # Opcional, obtén en https://groq.com
+
+# Gemini (Generación de imágenes)
+GEMINI_API_KEY=AIzaSyAaBbCcDdEeFfGg  # Obtén en https://aistudio.google.com/apikey
+GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation  # Modelo principal
+GEMINI_IMAGE_MODEL_FALLBACK=gemini-2.5-flash-image            # Modelo de respaldo
+
+# ============================================
+# REDIS (Opcional, recomendado para producción)
+# ============================================
+REDIS_URL=redis://:password@host:6379        # Para almacenar sesiones en Redis
+
+# ============================================
+# SOPORTE Y MANTENIMIENTO
+# ============================================
+SUPPORT_EMAIL=soporte@teccreate.edu          # Email de contacto de soporte
+MAINTENANCE_GATE_SECRET=clave-secreta-modo-mantenimiento  # Para activar modo mantenimiento
+
+# ============================================
+# LOGS Y MONITOREO (Opcional)
+# ============================================
+LOG_LEVEL=info                               # trace | debug | info | warn | error | fatal
+ENABLE_REQUEST_LOGGING=true                  # Logs de todas las peticiones HTTP
+```
+
+### 🔐 Generación de Secretos Seguros
+
+**En PowerShell (Windows):**
+```powershell
+# Generar SESSION_SECRET y JWT_SECRET
+-join ((65..90) + (97..122) + (48..57) | Get-Random -Count 40 | % {[char]$_})
+```
+
+**En Bash/Zsh (Linux/macOS):**
+```bash
+# Generar secretos aleatorios
+openssl rand -base64 32
+```
+
+**En Node.js:**
+```javascript
+require('crypto').randomBytes(32).toString('hex')
+```
+
+### 📋 Configuración por Entorno
+
+#### Development (local)
+```env
+NODE_ENV=development
+HOST=localhost
+PORT=3001
+CLIENT_URL=http://localhost:5173
+PUBLIC_BASE_URL=http://localhost:3001
+DATABASE_SSL=false
+DATABASE_SSL_ALLOW_SELF_SIGNED=true
+```
+
+#### Production (DigitalOcean, Render, etc.)
+```env
+NODE_ENV=production
+HOST=0.0.0.0
+PORT=8080
+CLIENT_URL=https://app.teccreate.edu
+PUBLIC_BASE_URL=https://api.teccreate.edu
+DATABASE_SSL=true
+DATABASE_SSL_ALLOW_SELF_SIGNED=false  # ⚠️ Cambiar a false y usar DATABASE_SSL_CA_B64
+```
+
+---
+
+## 🗄️ Configuración de Base de Datos
+
+### 1. Crear Base de Datos
+
+**Opción A: PostgreSQL Local**
+```bash
+# Crear base de datos
+createdb teccreate
+
+# O desde psql
+psql -U postgres
+CREATE DATABASE teccreate;
+\c teccreate
+```
+
+**Opción B: Servicio Gestionado (DigitalOcean, Render, AWS RDS)**
+1. Crea una base PostgreSQL desde el panel del proveedor
+2. Copia la connection string proporcionada
+3. Pégala en `DATABASE_URL`
+
+### 2. Aplicar Schema Completo
+
+El archivo `estructura_presentador_ia.sql` contiene TODO el schema necesario:
+- 9 tablas principales
+- Índices optimizados
+- Triggers automáticos
+- Funciones PostgreSQL
+
+**Ejecutar schema:**
+```bash
+# Desde línea de comandos
+psql "postgresql://usuario:password@host:5432/teccreate" -f estructura_presentador_ia.sql
+
+# O si tienes psql configurado
+psql -d teccreate -f estructura_presentador_ia.sql
+```
+
+**Verificar tablas creadas:**
+```sql
+\dt  -- Lista todas las tablas
+
+-- Deberías ver:
+-- usuarios
+-- presentaciones
+-- imagenes
+-- reportes
+-- logs_soporte
+-- modo_mantenimiento
+-- y otras...
+```
+
+### 3. Estructura de Tablas Principales
+
+#### **`usuarios`**
+```sql
+CREATE TABLE usuarios (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  apellido VARCHAR(255),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  google_id VARCHAR(255) UNIQUE,
+  foto_perfil TEXT,
+  rol VARCHAR(50) DEFAULT 'usuario',  -- usuario | admin | soporte
+  estado VARCHAR(50) DEFAULT 'activo',  -- activo | suspendido | inactivo
+  fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  ultimo_acceso TIMESTAMP
+);
+
+CREATE INDEX idx_usuarios_email ON usuarios(email);
+CREATE INDEX idx_usuarios_rol ON usuarios(rol);
+```
+
+#### **`presentaciones`**
+```sql
+CREATE TABLE presentaciones (
+  id SERIAL PRIMARY KEY,
+  usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+  tema VARCHAR(500) NOT NULL,
+  esquema_json JSONB NOT NULL,  -- Estructura completa de slides
+  idioma VARCHAR(50) DEFAULT 'Español',
+  nivel_detalle VARCHAR(50) DEFAULT 'Medium',
+  estilo_escritura VARCHAR(50) DEFAULT 'Professional',
+  plantilla VARCHAR(100) DEFAULT 'default',
+  fuente VARCHAR(100) DEFAULT 'calibri',
+  estado VARCHAR(50) DEFAULT 'borrador',  -- borrador | finalizada | compartida
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  vistas INTEGER DEFAULT 0,
+  compartida BOOLEAN DEFAULT FALSE,
+  enlace_publico VARCHAR(255) UNIQUE
+);
+
+CREATE INDEX idx_presentaciones_usuario ON presentaciones(usuario_id);
+CREATE INDEX idx_presentaciones_estado ON presentaciones(estado);
+CREATE INDEX idx_presentaciones_fecha ON presentaciones(fecha_creacion DESC);
+```
+
+#### **`imagenes`**
+```sql
+CREATE TABLE imagenes (
+  id SERIAL PRIMARY KEY,
+  presentacion_id INTEGER REFERENCES presentaciones(id) ON DELETE CASCADE,
+  slide_numero INTEGER NOT NULL,
+  prompt TEXT NOT NULL,
+  url_imagen TEXT NOT NULL,
+  modelo_ia VARCHAR(100),  -- gemini-2.0-flash-preview-image-generation
+  fecha_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_imagenes_presentacion ON imagenes(presentacion_id);
+```
+
+### 4. Conexión y Pool
+
+El archivo `db.js` gestiona el pool de conexiones:
+
+```javascript
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_SSL === 'true' ? {
+    rejectUnauthorized: process.env.DATABASE_SSL_ALLOW_SELF_SIGNED !== 'true',
+    ca: process.env.DATABASE_SSL_CA_B64 
+      ? Buffer.from(process.env.DATABASE_SSL_CA_B64, 'base64').toString('utf-8')
+      : undefined
+  } : false,
+  max: parseInt(process.env.PGPOOL_MAX) || 10,
+  idleTimeoutMillis: parseInt(process.env.PGPOOL_IDLE_TIMEOUT) || 30000,
+  connectionTimeoutMillis: parseInt(process.env.PGPOOL_CONNECTION_TIMEOUT) || 2000,
+});
+
+// Manejo de errores del pool
+pool.on('error', (err) => {
+  console.error('Error inesperado en pool de PostgreSQL:', err);
+  process.exit(-1);
+});
+
+module.exports = pool;
+```
+
+### 5. Configurar DATABASE_SSL_CA_B64 (Producción)
+### 5. Configurar DATABASE_SSL_CA_B64 (Producción)
+
+Si tu proveedor PostgreSQL requiere un certificado CA personalizado (DigitalOcean, AWS RDS, etc.):
+
+**Paso 1: Descargar certificado**
+- DigitalOcean: Panel → Databases → Connection Details → Download CA Certificate
+- Descargarás un archivo `ca-certificate.crt`
+
+**Paso 2: Convertir a Base64**
+
+**PowerShell:**
+```powershell
+$pem = Get-Content -Raw '.\ca-certificate.crt'
+$b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($pem))
+Write-Output $b64
+```
+
+**Bash:**
+```bash
+base64 -w 0 ca-certificate.crt
+```
+
+**Paso 3: Copiar output y pegar en variable de entorno**
+```env
+DATABASE_SSL_CA_B64=LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t...
+```
+
+⚠️ **Cambiar `DATABASE_SSL_ALLOW_SELF_SIGNED` a `false` en producción**
+
+### 6. Migraciones y Mantenimiento
+
+**Backup de base de datos:**
+```bash
+pg_dump "postgresql://user:pass@host:5432/teccreate" > backup_$(date +%Y%m%d).sql
+```
+
+**Restaurar backup:**
+```bash
+psql "postgresql://user:pass@host:5432/teccreate" < backup_20251102.sql
+```
+
+**Limpiar datos de prueba:**
+```sql
+-- Eliminar presentaciones de prueba
+DELETE FROM presentaciones WHERE tema LIKE '%test%' OR tema LIKE '%prueba%';
+
+-- Eliminar imágenes huérfanas
+DELETE FROM imagenes WHERE presentacion_id NOT IN (SELECT id FROM presentaciones);
+```
+
+---
+
+## 🔐 Configuración de OAuth con Google
+
+### 1. Crear Proyecto en Google Cloud Console
+
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
+2. Crea un nuevo proyecto o selecciona uno existente
+3. Habilita la **Google+ API** o **People API**
+
+### 2. Configurar Pantalla de Consentimiento
+
+1. Sidebar → **APIs & Services** → **OAuth consent screen**
+2. Selecciona **Internal** (si es Google Workspace) o **External**
+3. Completa:
+   - **App name**: TecCreate
+   - **User support email**: tu-email@instituto.edu
+   - **Developer contact**: tu-email@instituto.edu
+4. **Scopes**: Agrega `userinfo.email` y `userinfo.profile`
+5. Guarda y continúa
+
+### 3. Crear OAuth Client ID
+
+1. Sidebar → **Credentials** → **Create Credentials** → **OAuth Client ID**
+2. **Application type**: Web application
+3. **Name**: TecCreate Backend
+4. **Authorized JavaScript origins**:
+   ```
+   https://api.teccreate.edu
+   http://localhost:3001  (solo para desarrollo)
+   ```
+5. **Authorized redirect URIs**:
+   ```
+   https://api.teccreate.edu/auth/google/callback
+   http://localhost:3001/auth/google/callback  (solo para desarrollo)
+   ```
+6. Click **Create**
+7. **Copia** el **Client ID** y **Client secret**
+
+### 4. Configurar Variables de Entorno
+
+```env
+GOOGLE_CLIENT_ID=123456789-abcdefghijklmnop.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-abc123def456ghi789
+GOOGLE_CALLBACK_URL=https://api.teccreate.edu/auth/google/callback
+```
+
+### 5. Agregar Correos Institucionales Permitidos
+
+Solo los correos listados en `ADMIN_EMAILS` podrán iniciar sesión:
+
+```env
+ADMIN_EMAILS=coordinador@instituto.edu,profesor1@instituto.edu,profesor2@instituto.edu,soporte@instituto.edu
+```
+
+**Nota**: Separa múltiples correos con comas, sin espacios.
+
+### 6. Flujo de Autenticación
+
+**Backend: `config/passport.js`**
+```javascript
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    scope: ['profile', 'email']
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    const email = profile.emails[0].value;
+    
+    // Verificar whitelist
+    const adminEmails = process.env.ADMIN_EMAILS.split(',');
+    if (!adminEmails.includes(email)) {
+      return done(null, false, { message: 'Correo no autorizado' });
+    }
+    
+    // Buscar o crear usuario
+    let usuario = await pool.query(
+      'SELECT * FROM usuarios WHERE google_id = $1',
+      [profile.id]
+    );
+    
+    if (usuario.rows.length === 0) {
+      // Crear nuevo usuario
+      const result = await pool.query(
+        'INSERT INTO usuarios (nombre, apellido, email, google_id, foto_perfil, rol) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [profile.name.givenName, profile.name.familyName, email, profile.id, profile.photos[0].value, 'usuario']
+      );
+      usuario = result.rows[0];
+    } else {
+      usuario = usuario.rows[0];
+      // Actualizar último acceso
+      await pool.query(
+        'UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = $1',
+        [usuario.id]
+      );
+    }
+    
+    return done(null, usuario);
+  }
+));
+```
+
+### 7. Endpoints de Autenticación
+
+**Iniciar login:**
+```
+GET /auth/google
+```
+
+**Callback (manejado automáticamente):**
+```
+GET /auth/google/callback
+```
+
+**Logout:**
+```
+POST /auth/logout
+```
+
+### 8. Respuesta del Callback
+
+Después del login exitoso, el backend redirige al frontend con el token:
+
+```
+https://app.teccreate.edu/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&redirect=/dashboard
+```
+
+El frontend extrae el token del query string y lo guarda en localStorage:
+
+```javascript
+const params = new URLSearchParams(window.location.search);
+const token = params.get('token');
+if (token) {
+  localStorage.setItem('token', token);
+  window.location.href = params.get('redirect') || '/dashboard';
+}
+```
+
+### 9. Solución de Problemas OAuth
+
+| Error | Causa | Solución |
+|-------|-------|----------|
+| `redirect_uri_mismatch` | URI no coincide con Google Cloud | Verifica que `GOOGLE_CALLBACK_URL` esté en "Authorized redirect URIs" |
+| `invalid_client` | Client ID o Secret incorrectos | Revisa `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` |
+| `access_denied` | Usuario canceló el login | Normal, el usuario puede reintentar |
+| `Correo no autorizado` | Email no está en whitelist | Agrega el correo a `ADMIN_EMAILS` |
+
+---
+
+## 🤖 Configuración de Servicios IA
+
+### Groq (Generación de Texto)
+
+#### 1. Obtener API Key
+
+1. Ve a [groq.com](https://groq.com)
+2. Crea una cuenta o inicia sesión
+3. Dashboard → **API Keys** → **Create API Key**
+4. Copia la clave (empieza con `gsk_`)
+
+```env
+GROQ_API_KEY=gsk_abc123def456ghi789jkl012mno345
+```
+
+#### 2. Modelos Disponibles
+
+| Modelo | Descripción | Tokens | Velocidad |
+|--------|-------------|--------|-----------|
+| `llama3-70b-8192` | LLaMA 3 70B (recomendado) | 8,192 | 🔥 Ultra rápida |
+| `mixtral-8x7b-32768` | Mixtral 8x7B | 32,768 | ⚡ Rápida |
+| `llama3-8b-8192` | LLaMA 3 8B (más ligero) | 8,192 | 🚀 Muy rápida |
+
+**Configuración en `groqService.js`:**
+```javascript
+const GROQ_MODEL = 'llama3-70b-8192';  // Modelo por defecto
+```
+
+#### 3. Límites de Rate
+
+- **Requests por minuto (RPM)**: Varía según plan (free tier: ~30 RPM)
+- **Tokens por minuto (TPM)**: Varía según plan
+- **Recomendación**: Implementar cola de peticiones si generas múltiples presentaciones simultáneas
+
+#### 4. Ejemplo de Prompt
+
+```javascript
+const prompt = `Crea una presentación educativa sobre "${tema}" en ${idioma} con ${numeroSlides} slides.
+
+Nivel de detalle: ${detailLevel}
+Estilo: ${estilo}
+
+Estructura requerida:
+{
+  "tema": "...",
+  "slides": [
+    {
+      "titulo": "...",
+      "contenido": "...",
+      "bullets": ["...", "...", "..."]
+    }
+  ]
+}`;
+```
+
+### Google Gemini (Generación de Imágenes)
+
+#### 1. Obtener API Key
+
+1. Ve a [Google AI Studio](https://aistudio.google.com/apikey)
+2. Inicia sesión con tu cuenta Google
+3. Click en **Get API Key** → **Create API Key**
+4. Copia la clave (empieza con `AIzaSy`)
+
+```env
+GEMINI_API_KEY=AIzaSyAaBbCcDdEeFfGgHhIiJjKkLlMm
+```
+
+⚠️ **IMPORTANTE: Nunca subas esta clave a GitHub o repositorios públicos**
+
+#### 2. Modelos de Imagen
+
+**Modelo Principal:**
+```env
+GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
+```
+
+**Límites (Tier 1 - Pago):**
+- **RPM**: 1,000 requests/minuto
+- **TPM**: 1,000,000 tokens/minuto
+- **RPD**: 10,000 requests/día
+
+**Modelo de Respaldo:**
+```env
+GEMINI_IMAGE_MODEL_FALLBACK=gemini-2.5-flash-image
+```
+
+#### 3. Sistema de Fallback Automático
+
+El backend cambia automáticamente al modelo de respaldo si:
+- El modelo principal retorna error 400, 403, 404
+- El mensaje contiene: "not found", "unsupported", "deprecated"
+
+```javascript
+// geminiService.js
+async function generarImagen(prompt, slideNumero) {
+  let modelo = process.env.GEMINI_IMAGE_MODEL;
+  
+  try {
+    return await generarConModelo(modelo, prompt);
+  } catch (error) {
+    if (debeUsarFallback(error)) {
+      console.warn(`Modelo ${modelo} falló, usando fallback`);
+      modelo = process.env.GEMINI_IMAGE_MODEL_FALLBACK;
+      return await generarConModelo(modelo, prompt);
+    }
+    throw error;
+  }
+}
+```
+
+#### 4. Formato de Request
+
+```javascript
+const request = {
+  contents: [{
+    parts: [{
+      text: `Genera una imagen fotorealista sobre: ${prompt}. Estilo: ${estilo}, alta calidad, 16:9.`
+    }]
+  }],
+  generationConfig: {
+    responseModalities: ['TEXT', 'IMAGE'],  // ⚠️ Importante: incluir ambos
+    temperature: 1.0,
+    topP: 0.95
+  }
+};
+```
+
+#### 5. Procesamiento de Respuesta
+
+```javascript
+const candidate = response.candidates[0];
+const imagePart = candidate.content.parts.find(p => p.inlineData);
+
+if (imagePart && imagePart.inlineData) {
+  const base64Image = imagePart.inlineData.data;
+  const mimeType = imagePart.inlineData.mimeType;  // image/jpeg, image/png
+  
+  // Guardar en public/images/slides/
+  const filename = `slide_${presentacionId}_${slideNumero}.${extension}`;
+  const buffer = Buffer.from(base64Image, 'base64');
+  fs.writeFileSync(`public/images/slides/${filename}`, buffer);
+}
+```
+
+#### 6. Optimización de Prompts para Imágenes
+
+```javascript
+function construirPromptImagen(contenidoSlide, estilo) {
+  const estilos = {
+    'Professional': 'fotorealista, corporativo, limpio, profesional, alta calidad',
+    'Casual': 'ilustración moderna, colores vibrantes, friendly, accesible',
+    'Academic': 'diagrama técnico, científico, preciso, educativo'
+  };
+  
+  return `Genera una imagen ${estilos[estilo]} que represente: "${contenidoSlide}". 
+  Formato 16:9, sin texto, alta resolución.`;
+}
+```
+
+#### 7. Límites y Costos
+
+**Plan Free:**
+- 15 RPM
+- 1 millón de tokens/mes
+- Solo modelos básicos
+
+**Plan de Pago (Tier 1):**
+- 1,000 RPM
+- Facturación por tokens consumidos
+- Acceso a modelos preview
+
+**Recomendación**: Monitorea uso en Google AI Studio → Usage
+
+---
+
+## 💾 Instalación Local
+
+### Paso 1: Clonar Repositorio
+
+```bash
+git clone https://github.com/JuniorSebastian/TecCreateBackendLocal.git
+cd TecCreateBackendLocal/backend
+```
+
+### Paso 2: Instalar Dependencias
+
+```bash
+npm install
+```
+
+**Dependencias principales instaladas:**
+- express, cors, cookie-parser
+- pg (PostgreSQL driver)
+- passport, passport-google-oauth20
+- jsonwebtoken, express-session
+- groq-sdk, @google/generative-ai
+- pptxgenjs, sharp, qrcode
+- helmet, compression, express-rate-limit (opcionales)
+
+### Paso 3: Configurar Variables de Entorno
+
+```bash
+cp .env.example .env
+```
+
+**Edita `.env` con tus valores:**
+```env
+NODE_ENV=development
+PORT=3001
+DATABASE_URL=postgresql://postgres:password@localhost:5432/teccreate
+DATABASE_SSL=false
+CLIENT_URL=http://localhost:5173
+PUBLIC_BASE_URL=http://localhost:3001
+GOOGLE_CLIENT_ID=tu-client-id
+GOOGLE_CLIENT_SECRET=tu-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3001/auth/google/callback
+SESSION_SECRET=genera-clave-aleatoria-32-caracteres
+JWT_SECRET=otra-clave-diferente-32-caracteres
+ADMIN_EMAILS=tu-email@gmail.com
+GROQ_API_KEY=gsk_tu_clave
+GEMINI_API_KEY=AIzaSy_tu_clave
+```
+
+### Paso 4: Configurar PostgreSQL Local
+
+**Opción A: Instalación nativa**
+```bash
+# Windows (con Chocolatey)
+choco install postgresql
+
+# macOS (con Homebrew)
+brew install postgresql@15
+brew services start postgresql@15
+
+# Ubuntu
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+**Opción B: Docker**
+```bash
+docker run --name teccreate-postgres \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=teccreate \
+  -p 5432:5432 \
+  -d postgres:15
+```
+
+### Paso 5: Aplicar Schema
+
+```bash
+psql -U postgres -d teccreate -f estructura_presentador_ia.sql
+```
+
+**Verificar:**
+```bash
+psql -U postgres -d teccreate -c "\dt"
+```
+
+### Paso 6: Iniciar Servidor
+
+```bash
+npm start
+```
+
+**Output esperado:**
+```
+[INFO] Servidor escuchando en http://localhost:3001
+[INFO] Conexión a PostgreSQL establecida
+[INFO] Pool de conexiones: max=10, idle=30000ms
+```
+
+### Paso 7: Verificar Healthcheck
+
+```bash
+curl http://localhost:3001/healthz
+```
+
+**Respuesta esperada:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-11-02T10:30:00.000Z",
+  "uptime": 15.234
+}
+```
+
+### Paso 8: Probar Autenticación
+
+1. Abre tu navegador en `http://localhost:3001/auth/google`
+2. Inicia sesión con un correo de `ADMIN_EMAILS`
+3. Deberías ser redirigido a `http://localhost:5173/?token=eyJ...&redirect=/dashboard`
+
+---
+
+## 🚀 Despliegue en Producción
+
+### Checklist Pre-Despliegue
+
+- [ ] Variables de entorno configuradas (sin valores de desarrollo)
+- [ ] `NODE_ENV=production`
+- [ ] `DATABASE_SSL=true`
+- [ ] `DATABASE_SSL_ALLOW_SELF_SIGNED=false` (usar `DATABASE_SSL_CA_B64`)
+- [ ] Secretos generados de forma segura (SESSION_SECRET, JWT_SECRET)
+- [ ] OAuth redirect URIs actualizados en Google Cloud
+- [ ] PostgreSQL con respaldos automáticos configurados
+- [ ] CORS configurado correctamente (`ALLOWED_ORIGINS`)
+- [ ] Dominio con HTTPS/SSL válido
+- [ ] Logs y monitoreo configurados
+- [ ] Rate limiting habilitado (opcional pero recomendado)
+
+---
+
+## 🐳 Despliegue con Docker
+
+### 1. Crear Dockerfile
+
+```dockerfile
+# backend/Dockerfile
+FROM node:20-alpine
+
+# Metadata
+LABEL maintainer="tu-email@instituto.edu"
+LABEL description="TecCreate Backend - Generador de presentaciones IA"
+
+# Crear directorio de trabajo
+WORKDIR /app
+
+# Copiar package files
+COPY package*.json ./
+
+# Instalar dependencias de producción
+RUN npm ci --only=production && npm cache clean --force
+
+# Copiar código fuente
+COPY . .
+
+# Crear directorios necesarios
+RUN mkdir -p public/images/slides public/shared-presentaciones
+
+# Usuario no-root para seguridad
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
+
+USER nodejs
+
+# Exponer puerto
+EXPOSE 3001
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3001/healthz', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); });"
+
+# Comando de inicio
+CMD ["node", "index.js"]
+```
+
+### 2. Crear docker-compose.yml (Desarrollo)
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: teccreate-postgres
+    environment:
+      POSTGRES_DB: teccreate
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./estructura_presentador_ia.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: teccreate-backend
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/teccreate
+      PORT: 3001
+      # Agregar resto de variables desde .env
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./public:/app/public
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+```
+
+### 3. Construir y Ejecutar
+
+```bash
+# Construir imagen
+docker build -t teccreate-backend:latest .
+
+# Ejecutar con docker-compose
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f backend
+
+# Detener
+docker-compose down
+```
+
+### 4. Despliegue en Docker Swarm / Kubernetes
+
+**Docker Swarm:**
+```bash
+docker stack deploy -c docker-compose.prod.yml teccreate
+```
+
+**Kubernetes** (ejemplo básico):
+```yaml
+# k8s/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teccreate-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: teccreate-backend
+  template:
+    metadata:
+      labels:
+        app: teccreate-backend
+    spec:
+      containers:
+      - name: backend
+        image: tu-registry/teccreate-backend:latest
+        ports:
+        - containerPort: 3001
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: teccreate-secrets
+              key: database-url
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 3001
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 3001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+```
+
+---
+
+## ☁️ Despliegue en DigitalOcean
+
+### Opción A: App Platform (Recomendado)
+
+#### 1. Crear App desde GitHub
+
+1. Panel DigitalOcean → **App Platform** → **Create App**
+2. **Source**: Conecta tu repositorio GitHub
+3. **Branch**: `main` o `production`
+4. **Autodeploy**: ✅ Habilitar (deploy automático en push)
+
+#### 2. Configurar Build
+
+- **Type**: Web Service
+- **Environment**: Node.js
+- **Build Command**: `npm install`
+- **Run Command**: `node index.js` o `npm start`
+- **HTTP Port**: 3001 (o variable `PORT`)
+- **HTTP Request Routes**: `/`
+
+#### 3. Agregar Base de Datos
+
+1. **Add Resource** → **Database** → **PostgreSQL**
+2. Selecciona plan (Basic $15/mes o superior)
+3. DigitalOcean creará automáticamente `DATABASE_URL`
+4. Descarga **CA Certificate** para `DATABASE_SSL_CA_B64`
+
+#### 4. Configurar Variables de Entorno
+
+En **Settings** → **Environment Variables**:
+
+```
+NODE_ENV=production
+HOST=0.0.0.0
+PORT=8080
+PUBLIC_BASE_URL=https://tu-app.ondigitalocean.app
+CLIENT_URL=https://tu-frontend.ondigitalocean.app
+ALLOWED_ORIGINS=https://tu-frontend.ondigitalocean.app
+DATABASE_SSL=true
+DATABASE_SSL_CA_B64=LS0tLS1CRUdJTi...  (descargado del panel)
+SESSION_SECRET=<genera-uno-seguro>
+JWT_SECRET=<genera-otro-diferente>
+GOOGLE_CLIENT_ID=<tu-client-id>
+GOOGLE_CLIENT_SECRET=<tu-client-secret>
+GOOGLE_CALLBACK_URL=https://tu-app.ondigitalocean.app/auth/google/callback
+ADMIN_EMAILS=correo1@instituto.edu,correo2@instituto.edu
+GROQ_API_KEY=gsk_tu_clave
+GEMINI_API_KEY=AIzaSy_tu_clave
+```
+
+#### 5. Aplicar Schema a Base de Datos
+
+```bash
+# Obtener connection string del panel (Connection Details)
+psql "postgresql://user:pass@host:25060/db?sslmode=require" -f estructura_presentador_ia.sql
+```
+
+#### 6. Deploy
+
+Click **Create Resources** → Espera 5-10 minutos
+
+**Verificar:**
+```bash
+curl https://tu-app.ondigitalocean.app/healthz
+```
+
+#### 7. Configurar Dominio Personalizado (Opcional)
+
+1. **Settings** → **Domains**
+2. **Add Domain** → `api.teccreate.edu`
+3. Agrega registros DNS en tu proveedor:
+   ```
+   CNAME api.teccreate.edu → tu-app.ondigitalocean.app
+   ```
+4. Actualiza variables:
+   ```
+   PUBLIC_BASE_URL=https://api.teccreate.edu
+   GOOGLE_CALLBACK_URL=https://api.teccreate.edu/auth/google/callback
+   ```
+
+### Opción B: Droplet (VPS Manual)
+
+#### 1. Crear Droplet
+
+- **Image**: Ubuntu 22.04 LTS
+- **Plan**: Basic ($12/mes - 2GB RAM)
+- **Datacenter**: Más cercano a tus usuarios
+- **SSH Key**: Agrega tu clave pública
+
+#### 2. Conectar por SSH
+
+```bash
+ssh root@tu-droplet-ip
+```
+
+#### 3. Instalar Dependencias
+
+```bash
+# Actualizar sistema
+apt update && apt upgrade -y
+
+# Instalar Node.js 20 LTS
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
+
+# Instalar PostgreSQL
+apt install -y postgresql postgresql-contrib
+
+# Instalar Nginx
+apt install -y nginx
+
+# Instalar PM2 globalmente
+npm install -g pm2
+```
+
+#### 4. Configurar PostgreSQL
+
+```bash
+sudo -u postgres psql
+
+CREATE DATABASE teccreate;
+CREATE USER teccreate_user WITH ENCRYPTED PASSWORD 'tu-password-segura';
+GRANT ALL PRIVILEGES ON DATABASE teccreate TO teccreate_user;
+\q
+
+# Aplicar schema
+psql -U teccreate_user -d teccreate -f estructura_presentador_ia.sql
+```
+
+#### 5. Clonar y Configurar Backend
+
+```bash
+cd /var/www
+git clone https://github.com/tu-usuario/TecCreateBackendLocal.git backend
+cd backend
+npm install --production
+
+# Crear .env
+nano .env
+# (Pega tus variables de producción)
+
+# Cambiar propietario
+chown -R www-data:www-data /var/www/backend
+```
+
+#### 6. Configurar PM2
+
+```bash
+# Iniciar backend
+pm2 start index.js --name teccreate-backend
+
+# Guardar configuración PM2
+pm2 save
+
+# Auto-start en boot
+pm2 startup systemd
+# (ejecuta el comando que PM2 te muestre)
+```
+
+#### 7. Configurar Nginx como Reverse Proxy
+
+```bash
+nano /etc/nginx/sites-available/teccreate
+```
+
+```nginx
+server {
+    listen 80;
+    server_name api.teccreate.edu;
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+```bash
+# Habilitar sitio
+ln -s /etc/nginx/sites-available/teccreate /etc/nginx/sites-enabled/
+nginx -t
+systemctl restart nginx
+```
+
+#### 8. Configurar HTTPS con Let's Encrypt
+
+```bash
+apt install -y certbot python3-certbot-nginx
+certbot --nginx -d api.teccreate.edu
+
+# Auto-renovación (ya configurada por defecto)
+certbot renew --dry-run
+```
+
+#### 9. Firewall
+
+```bash
+ufw allow OpenSSH
+ufw allow 'Nginx Full'
+ufw enable
+```
+
+---
+
+## 🎨 Despliegue en Render
+
+### 1. Crear Cuenta en Render
+
+Ve a [render.com](https://render.com) y crea una cuenta (gratis).
+
+### 2. Opción A: Con Blueprint (render.yaml)
+
+El archivo `render.yaml` en la raíz define infraestructura como código:
+
+```yaml
+services:
+  - type: web
+    name: teccreate-backend
+    env: node
+    region: oregon
+    plan: starter  # $7/mes
+    buildCommand: npm install
+    startCommand: node index.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: DATABASE_URL
+        fromDatabase:
+          name: teccreate-postgres
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      # Resto de variables (agregar manualmente)
+
+databases:
+  - name: teccreate-postgres
+    databaseName: teccreate
+    user: teccreate_user
+    region: oregon
+    plan: starter  # $7/mes
+```
+
+**Pasos:**
+1. Dashboard Render → **New** → **Blueprint**
+2. Conecta tu repo GitHub
+3. Render detectará `render.yaml`
+4. **Review** → Verifica servicios
+5. **Apply** → Deploy automático
+
+### 2. Opción B: Manual (Sin Blueprint)
+
+#### Crear Web Service
+
+1. **New** → **Web Service**
+2. **GitHub**: Conecta repositorio
+3. **Branch**: `main`
+4. **Root Directory**: `backend` (si está en subdirectorio)
+5. **Environment**: Node
+6. **Build Command**: `npm install`
+7. **Start Command**: `node index.js`
+8. **Plan**: Starter ($7/mes)
+
+#### Crear PostgreSQL Database
+
+1. **New** → **PostgreSQL**
+2. **Name**: teccreate-postgres
+3. **Database**: teccreate
+4. **User**: teccreate_user
+5. **Plan**: Starter ($7/mes)
+6. **Create Database**
+
+#### Conectar Database a Web Service
+
+1. En el Web Service → **Environment** → **Add Environment Variable**
+2. **Key**: `DATABASE_URL`
+3. **Value**: Copia el **Internal Connection String** de la base
+
+#### Agregar Variables de Entorno
+
+```
+NODE_ENV=production
+PORT=8080
+PUBLIC_BASE_URL=https://teccreate-backend.onrender.com
+CLIENT_URL=https://tu-frontend.onrender.com
+DATABASE_SSL=true
+SESSION_SECRET=<auto-generado por Render>
+JWT_SECRET=<auto-generado por Render>
+GOOGLE_CLIENT_ID=<tu-client-id>
+GOOGLE_CLIENT_SECRET=<tu-client-secret>
+GOOGLE_CALLBACK_URL=https://teccreate-backend.onrender.com/auth/google/callback
+ADMIN_EMAILS=correo1@instituto.edu,correo2@instituto.edu
+GROQ_API_KEY=gsk_tu_clave
+GEMINI_API_KEY=AIzaSy_tu_clave
+GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
+GEMINI_IMAGE_MODEL_FALLBACK=gemini-2.5-flash-image
+```
+
+#### Aplicar Schema
+
+```bash
+# Obtener connection string (External)
+psql "<External-Connection-String>" -f estructura_presentador_ia.sql
+```
+
+### 3. Deploy
+
+Render desplegará automáticamente. Monitorea en **Logs**.
+
+**Verificar:**
+```bash
+curl https://teccreate-backend.onrender.com/healthz
+```
+
+### 4. Configurar Custom Domain
+
+1. **Settings** → **Custom Domain**
+2. **Add Custom Domain** → `api.teccreate.edu`
+3. Agrega CNAME en tu DNS:
+   ```
+   CNAME api → teccreate-backend.onrender.com
+   ```
+4. Render proveerá SSL automáticamente (Let's Encrypt)
+
+---
+
+## 📡 Autenticación y Seguridad
+
+### JWT (JSON Web Tokens)
+
+#### Generación de Token
+
+**En `config/passport.js` después de OAuth:**
+```javascript
+const jwt = require('jsonwebtoken');
+
+const token = jwt.sign(
+  {
+    usuario_id: usuario.id,
+    email: usuario.email,
+    rol: usuario.rol,
+    nombre: usuario.nombre
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+);
+```
+
+#### Validación de Token
+
+**Middleware `authMiddleware.js`:**
+```javascript
+const jwt = require('jsonwebtoken');
+
+function verificarToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // "Bearer TOKEN"
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token no proporcionado' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.usuario = decoded;  // Adjuntar datos del usuario a req
+    next();
+  } catch (error) {
+    return res.status(403).json({ error: 'Token inválido o expirado' });
+  }
+}
+
+module.exports = { verificarToken };
+```
+
+#### Uso en Rutas
+
+```javascript
+const { verificarToken } = require('../middlewares/authMiddleware');
+
+router.get('/presentaciones/mias', verificarToken, presentacionesController.listarMias);
+```
+
+### CORS (Cross-Origin Resource Sharing)
+
+**Configuración en `index.js`:**
+```javascript
+const cors = require('cors');
+
+// Normalizar URLs (remover trailing slash)
+const normalizeUrl = (url) => url.replace(/\/+$/, '');
+
+const allowedOrigins = [
+  normalizeUrl(process.env.CLIENT_URL),
+  normalizeUrl(process.env.PUBLIC_BASE_URL),
+  ...process.env.ALLOWED_ORIGINS.split(',').map(normalizeUrl)
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(normalizeUrl(origin))) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origen ${origin} no permitido por CORS`));
+    }
+  },
+  credentials: true,  // Permite cookies/sessions
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+```
+
+### Helmet (Seguridad Headers HTTP)
+
+**Instalación opcional pero recomendada:**
+```bash
+npm install helmet
+```
+
+**Configuración:**
+```javascript
+const helmet = require('helmet');
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,  // 1 año
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+```
+
+### Rate Limiting
+
+**Protección contra ataques de fuerza bruta:**
+```bash
+npm install express-rate-limit
+```
+
+**Configuración:**
+```javascript
+const rateLimit = require('express-rate-limit');
+
+// Limitar peticiones globales
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minutos
+  max: 100,  // 100 requests por IP
+  message: 'Demasiadas peticiones desde esta IP, intenta más tarde'
+});
+
+app.use(limiter);
+
+// Limitar login específicamente
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,  // Solo 5 intentos de login
+  skipSuccessfulRequests: true
+});
+
+app.use('/auth/google', loginLimiter);
+```
+
+### Sanitización de Inputs
+
+**Prevención de SQL Injection:**
+```javascript
+// ❌ MAL: Vulnerable a SQL injection
+const resultado = await pool.query(
+  `SELECT * FROM usuarios WHERE email = '${req.body.email}'`
+);
+
+// ✅ BIEN: Usar parámetros preparados
+const resultado = await pool.query(
+  'SELECT * FROM usuarios WHERE email = $1',
+  [req.body.email]
+);
+```
+
+### Validación de Datos
+
+**Ejemplo con express-validator:**
+```bash
+npm install express-validator
+```
+
+```javascript
+const { body, validationResult } = require('express-validator');
+
+router.post('/presentaciones',
+  verificarToken,
+  [
+    body('tema').isString().isLength({ min: 3, max: 500 }).trim().escape(),
+    body('numeroSlides').isInt({ min: 3, max: 30 }),
+    body('idioma').isIn(['Español', 'English', 'French']),
+    body('detailLevel').isIn(['Brief', 'Medium', 'Detailed'])
+  ],
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  },
+  presentacionesController.crear
+);
+```
+
+---
+
+## 🔌 Endpoints de Autenticación
 - [IA y generación de PPTX](#ia-y-generación-de-pptx)
 - [Soporte y mantenimiento](#soporte-y-mantenimiento)
 - [Salud, CORS y sesiones](#salud-cors-y-sesiones)
