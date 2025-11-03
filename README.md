@@ -2059,11 +2059,1174 @@ router.post('/presentaciones',
 ---
 
 ## 🔌 Endpoints de Autenticación
-- [IA y generación de PPTX](#ia-y-generación-de-pptx)
-- [Soporte y mantenimiento](#soporte-y-mantenimiento)
-- [Salud, CORS y sesiones](#salud-cors-y-sesiones)
-- [Solución de problemas](#solución-de-problemas)
-- [Documentación complementaria](#documentación-complementaria)
+
+### `GET /auth/google`
+**Inicia el flujo OAuth con Google**
+
+**Acceso:** Público (no requiere autenticación)
+
+**Descripción:** Redirige al usuario a la página de login de Google. Después del login exitoso, Google redirige a `/auth/google/callback`.
+
+**Ejemplo de uso:**
+```javascript
+// Desde el frontend
+window.location.href = 'https://api.teccreate.edu/auth/google';
+```
+
+---
+
+### `GET /auth/google/callback`
+**Callback de Google OAuth**
+
+**Acceso:** Público (manejado automáticamente por Passport)
+
+**Descripción:** Google redirige aquí después del login. El backend:
+1. Recibe el código de autorización
+2. Intercambia el código por el perfil del usuario
+3. Verifica que el email esté en la whitelist (`ADMIN_EMAILS`)
+4. Crea o actualiza el usuario en la base de datos
+5. Genera un JWT
+6. Redirige al frontend con el token
+
+**Query params recibidos de Google:**
+- `code`: Código de autorización temporal
+
+**Redirección final:**
+```
+https://app.teccreate.edu/?token=eyJhbGc...&redirect=/dashboard
+```
+
+**Errores posibles:**
+- `403 Forbidden`: Email no autorizado (no está en whitelist)
+- `500 Internal Server Error`: Error al crear usuario en DB
+
+---
+
+### `POST /auth/logout`
+**Cerrar sesión**
+
+**Acceso:** Usuario autenticado
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "Sesión cerrada exitosamente"
+}
+```
+
+**Descripción:** Destruye la sesión en el servidor. El frontend debe eliminar el token de localStorage.
+
+**Ejemplo frontend:**
+```javascript
+await axios.post('/auth/logout', {}, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+localStorage.removeItem('token');
+window.location.href = '/login';
+```
+
+---
+
+## 📊 Endpoints de Presentaciones
+
+### `POST /presentaciones`
+**Crear presentación con esquema manual**
+
+**Acceso:** Usuario autenticado
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "tema": "Inteligencia Artificial en la Educación",
+  "esquema_json": {
+    "tema": "Inteligencia Artificial en la Educación",
+    "slides": [
+      {
+        "titulo": "Introducción a la IA",
+        "contenido": "La inteligencia artificial está transformando...",
+        "bullets": [
+          "Definición de IA",
+          "Historia y evolución",
+          "Aplicaciones actuales"
+        ]
+      }
+    ]
+  },
+  "idioma": "Español",
+  "plantilla": "default",
+  "fuente": "calibri"
+}
+```
+
+**Respuesta exitosa (201):**
+```json
+{
+  "message": "Presentación creada exitosamente",
+  "presentacion": {
+    "id": 42,
+    "usuario_id": 5,
+    "tema": "Inteligencia Artificial en la Educación",
+    "esquema_json": { ... },
+    "idioma": "Español",
+    "plantilla": "default",
+    "fuente": "calibri",
+    "estado": "borrador",
+    "fecha_creacion": "2025-11-02T10:30:00.000Z"
+  }
+}
+```
+
+**Errores:**
+- `400 Bad Request`: Faltan campos obligatorios o formato inválido
+- `401 Unauthorized`: Token no proporcionado
+- `403 Forbidden`: Token inválido o expirado
+
+---
+
+### `POST /presentaciones/generar`
+**Generar presentación con IA (Groq)**
+
+**Acceso:** Usuario autenticado
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "tema": "Blockchain y Criptomonedas",
+  "numeroSlides": 10,
+  "idioma": "Español",
+  "detailLevel": "Medium",
+  "estilo": "Professional",
+  "plantilla": "software",
+  "fuente": "roboto"
+}
+```
+
+**Parámetros:**
+- `tema` (string, requerido): Tema de la presentación (min: 3, max: 500 caracteres)
+- `numeroSlides` (integer, requerido): Cantidad de slides (min: 3, max: 30)
+- `idioma` (string, opcional): `"Español"` | `"English"` | `"French"` (default: `"Español"`)
+- `detailLevel` (string, opcional): `"Brief"` | `"Medium"` | `"Detailed"` (default: `"Medium"`)
+- `estilo` (string, opcional): `"Professional"` | `"Casual"` | `"Academic"` (o frontend: `"Default"` | `"Modern"` | `"Minimal"`)
+- `plantilla` (string, opcional): `"default"` | `"modern"` | `"minimal"` | `"software"` | `"maquinaria"` | `"mecatronica"` | `"quimica"`
+- `fuente` (string, opcional): `"calibri"` | `"arial"` | `"roboto"` | etc.
+
+**Respuesta exitosa (201):**
+```json
+{
+  "message": "Presentación generada exitosamente",
+  "presentacion": {
+    "id": 43,
+    "usuario_id": 5,
+    "tema": "Blockchain y Criptomonedas",
+    "esquema_json": {
+      "tema": "Blockchain y Criptomonedas",
+      "slides": [
+        {
+          "titulo": "¿Qué es Blockchain?",
+          "contenido": "Blockchain es una tecnología de registro distribuido...",
+          "bullets": [
+            "Definición de blockchain y su arquitectura descentralizada",
+            "Características fundamentales: inmutabilidad y transparencia",
+            "Diferencias entre blockchain pública y privada",
+            "Casos de uso más allá de las criptomonedas"
+          ]
+        }
+        // ... más slides
+      ]
+    },
+    "idioma": "Español",
+    "nivel_detalle": "Medium",
+    "estilo_escritura": "Professional",
+    "plantilla": "software",
+    "fuente": "roboto",
+    "estado": "borrador",
+    "fecha_creacion": "2025-11-02T10:35:00.000Z"
+  }
+}
+```
+
+**Errores:**
+- `400 Bad Request`: Parámetros inválidos o fuera de rango
+- `503 Service Unavailable`: Groq API no disponible o `GROQ_API_KEY` no configurada
+- `500 Internal Server Error`: Error al procesar respuesta de Groq
+
+---
+
+### `POST /presentaciones/generar/export`
+**Generar y exportar presentación en un solo paso**
+
+**Acceso:** Usuario autenticado
+
+**Descripción:** Genera el esquema con IA y exporta directamente a PPTX sin guardar en DB.
+
+**Body:** Igual que `/presentaciones/generar`
+
+**Respuesta exitosa (200):**
+```
+Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation
+Content-Disposition: attachment; filename="Blockchain_y_Criptomonedas.pptx"
+
+[Binary PPTX file]
+```
+
+**Uso desde frontend:**
+```javascript
+const response = await axios.post('/presentaciones/generar/export', {
+  tema: 'Blockchain y Criptomonedas',
+  numeroSlides: 10,
+  idioma: 'Español',
+  detailLevel: 'Medium',
+  estilo: 'Professional'
+}, {
+  headers: { Authorization: `Bearer ${token}` },
+  responseType: 'blob'
+});
+
+// Descargar archivo
+const url = window.URL.createObjectURL(new Blob([response.data]));
+const link = document.createElement('a');
+link.href = url;
+link.setAttribute('download', 'presentacion.pptx');
+document.body.appendChild(link);
+link.click();
+link.remove();
+```
+
+---
+
+### `GET /presentaciones/mias`
+**Listar mis presentaciones**
+
+**Acceso:** Usuario autenticado
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Query params (opcionales):**
+- `page` (integer): Número de página (default: 1)
+- `limit` (integer): Resultados por página (default: 10, max: 50)
+- `estado` (string): Filtrar por estado (`"borrador"` | `"finalizada"` | `"compartida"`)
+- `search` (string): Buscar en tema (búsqueda parcial, case-insensitive)
+
+**Ejemplo:**
+```
+GET /presentaciones/mias?page=1&limit=20&estado=finalizada&search=inteligencia
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "presentaciones": [
+    {
+      "id": 43,
+      "tema": "Inteligencia Artificial en la Educación",
+      "idioma": "Español",
+      "nivel_detalle": "Medium",
+      "estilo_escritura": "Professional",
+      "plantilla": "default",
+      "estado": "finalizada",
+      "fecha_creacion": "2025-11-01T14:20:00.000Z",
+      "fecha_modificacion": "2025-11-01T15:30:00.000Z",
+      "vistas": 15,
+      "compartida": true,
+      "enlace_publico": "abc123def456"
+    }
+    // ... más presentaciones
+  ],
+  "paginacion": {
+    "total": 47,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 3
+  }
+}
+```
+
+---
+
+### `GET /presentaciones/:id`
+**Obtener detalle de presentación**
+
+**Acceso:** Usuario autenticado (solo propietario, admin o soporte)
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "id": 43,
+  "usuario_id": 5,
+  "tema": "Blockchain y Criptomonedas",
+  "esquema_json": {
+    "tema": "Blockchain y Criptomonedas",
+    "slides": [ ... ]
+  },
+  "idioma": "Español",
+  "nivel_detalle": "Medium",
+  "estilo_escritura": "Professional",
+  "plantilla": "software",
+  "fuente": "roboto",
+  "estado": "finalizada",
+  "fecha_creacion": "2025-11-02T10:35:00.000Z",
+  "fecha_modificacion": "2025-11-02T11:00:00.000Z",
+  "vistas": 8,
+  "compartida": false,
+  "enlace_publico": null,
+  "imagenes": [
+    {
+      "id": 101,
+      "slide_numero": 1,
+      "url_imagen": "/images/slides/slide_43_1.jpg",
+      "modelo_ia": "gemini-2.0-flash-preview-image-generation",
+      "fecha_generacion": "2025-11-02T10:40:00.000Z"
+    }
+  ]
+}
+```
+
+**Errores:**
+- `404 Not Found`: Presentación no existe
+- `403 Forbidden`: Usuario no tiene permiso (no es propietario ni admin/soporte)
+
+---
+
+### `PUT /presentaciones/:id`
+**Actualizar presentación**
+
+**Acceso:** Usuario autenticado (solo propietario o admin)
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Body (todos opcionales):**
+```json
+{
+  "tema": "Nuevo título actualizado",
+  "esquema_json": { ... },
+  "plantilla": "modern",
+  "fuente": "arial",
+  "estado": "finalizada"
+}
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "Presentación actualizada exitosamente",
+  "presentacion": { ... }
+}
+```
+
+---
+
+### `DELETE /presentaciones/:id`
+**Eliminar presentación**
+
+**Acceso:** Usuario autenticado (solo propietario, admin o soporte)
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "Presentación eliminada exitosamente"
+}
+```
+
+**Nota:** Elimina en cascada todas las imágenes asociadas.
+
+---
+
+### `GET /presentaciones/:id/export`
+**Exportar presentación a PPTX**
+
+**Acceso:** Usuario autenticado (propietario, admin o soporte)
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Respuesta exitosa (200):**
+```
+Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation
+Content-Disposition: attachment; filename="Blockchain_y_Criptomonedas.pptx"
+
+[Binary PPTX file]
+```
+
+**Descripción:** Genera un archivo PowerPoint con:
+- Plantilla visual aplicada según `plantilla`
+- Fuente personalizada según `fuente`
+- Todas las slides del `esquema_json`
+- Imágenes insertadas si existen en la tabla `imagenes`
+- Formato 16:9 profesional
+
+---
+
+### `POST /presentaciones/:id/share`
+**Compartir presentación públicamente**
+
+**Acceso:** Usuario autenticado (solo propietario)
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Descripción:** Genera un enlace público para descargar la presentación sin autenticación.
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "Presentación compartida exitosamente",
+  "enlace_publico": "https://api.teccreate.edu/presentaciones/shared/abc123def456",
+  "codigo_qr": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+}
+```
+
+**El frontend puede:**
+- Mostrar el enlace para copiar
+- Mostrar el QR para escanear
+- Permitir descargar la imagen del QR
+
+---
+
+### `POST /presentaciones/:id/imagenes`
+**Generar imágenes para slides con Gemini**
+
+**Acceso:** Usuario autenticado (solo propietario o admin)
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Body (opcional):**
+```json
+{
+  "slides": [1, 3, 5]  // Generar solo para estas slides (opcional, por defecto: todas)
+}
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "Imágenes generadas exitosamente",
+  "imagenes": [
+    {
+      "slide_numero": 1,
+      "url_imagen": "/images/slides/slide_43_1.jpg",
+      "modelo_ia": "gemini-2.0-flash-preview-image-generation"
+    },
+    {
+      "slide_numero": 3,
+      "url_imagen": "/images/slides/slide_43_3.jpg",
+      "modelo_ia": "gemini-2.5-flash-image"  // Usó fallback
+    }
+  ],
+  "errores": []  // Slides que fallaron (si alguna)
+}
+```
+
+**Descripción:**
+- Lee el contenido de cada slide del `esquema_json`
+- Construye prompts optimizados según el estilo
+- Llama a Gemini API para generar cada imagen
+- Guarda imágenes en `public/images/slides/`
+- Registra en tabla `imagenes` con URL y modelo usado
+- Sistema de fallback automático si el modelo principal falla
+
+**Errores:**
+- `503 Service Unavailable`: Gemini API no disponible o sin `GEMINI_API_KEY`
+- `404 Not Found`: Presentación no existe
+
+---
+
+## 👨‍💼 Endpoints de Administración
+
+### `GET /admin/dashboard/resumen`
+**Obtener métricas del dashboard**
+
+**Acceso:** Solo admin
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "usuarios": {
+    "total": 47,
+    "activos": 42,
+    "suspendidos": 3,
+    "inactivos": 2,
+    "nuevos_mes": 8
+  },
+  "presentaciones": {
+    "total": 324,
+    "mes_actual": 45,
+    "compartidas": 89,
+    "por_estado": {
+      "borrador": 120,
+      "finalizada": 180,
+      "compartida": 24
+    }
+  },
+  "actividad": {
+    "sesiones_activas": 15,
+    "presentaciones_hoy": 12,
+    "exportaciones_semana": 67
+  },
+  "tendencias": {
+    "temas_populares": [
+      { "tema": "Inteligencia Artificial", "count": 23 },
+      { "tema": "Blockchain", "count": 18 }
+    ],
+    "plantillas_mas_usadas": [
+      { "plantilla": "software", "count": 145 },
+      { "plantilla": "default", "count": 98 }
+    ]
+  }
+}
+```
+
+---
+
+### `GET /admin/usuarios`
+**Listar todos los usuarios**
+
+**Acceso:** Solo admin
+
+**Query params:**
+- `page`, `limit`: Paginación
+- `rol`: Filtrar por rol (`usuario` | `admin` | `soporte`)
+- `estado`: Filtrar por estado (`activo` | `suspendido` | `inactivo`)
+- `search`: Buscar por nombre o email
+
+**Respuesta exitosa (200):**
+```json
+{
+  "usuarios": [
+    {
+      "id": 5,
+      "nombre": "Juan",
+      "apellido": "Pérez",
+      "email": "juan.perez@instituto.edu",
+      "rol": "usuario",
+      "estado": "activo",
+      "fecha_registro": "2025-09-15T08:00:00.000Z",
+      "ultimo_acceso": "2025-11-02T09:30:00.000Z",
+      "total_presentaciones": 12
+    }
+  ],
+  "paginacion": { ... }
+}
+```
+
+---
+
+### `PATCH /admin/usuarios/:id`
+**Actualizar usuario (cambiar rol o estado)**
+
+**Acceso:** Solo admin
+
+**Body:**
+```json
+{
+  "rol": "admin",
+  "estado": "activo"
+}
+```
+
+**Respuesta exitosa (200):**
+```json
+{
+  "message": "Usuario actualizado exitosamente",
+  "usuario": { ... }
+}
+```
+
+---
+
+### `GET /admin/presentaciones`
+**Listar todas las presentaciones (todos los usuarios)**
+
+**Acceso:** Solo admin o soporte
+
+**Query params:** Igual que `/presentaciones/mias` + `usuario_id`
+
+---
+
+## 🛠️ Endpoints de Reportes y Soporte
+
+### `POST /reportes`
+**Crear reporte de soporte**
+
+**Acceso:** Usuario autenticado
+
+**Body:**
+```json
+{
+  "asunto": "Error al exportar presentación",
+  "descripcion": "Al intentar exportar mi presentación #43, obtengo un error 500",
+  "prioridad": "media",
+  "categoria": "tecnico"
+}
+```
+
+**Respuesta exitosa (201):**
+```json
+{
+  "message": "Reporte creado exitosamente",
+  "reporte": {
+    "id": 15,
+    "usuario_id": 5,
+    "asunto": "Error al exportar presentación",
+    "descripcion": "...",
+    "estado": "abierto",
+    "prioridad": "media",
+    "categoria": "tecnico",
+    "fecha_creacion": "2025-11-02T11:00:00.000Z"
+  }
+}
+```
+
+---
+
+### `GET /reportes`
+**Listar reportes**
+
+**Acceso:** 
+- Usuario: Solo sus propios reportes
+- Admin/Soporte: Todos los reportes
+
+**Query params:**
+- `estado`: `abierto` | `en_proceso` | `resuelto` | `cerrado`
+- `prioridad`: `baja` | `media` | `alta` | `critica`
+- `categoria`: `tecnico` | `funcional` | `sugerencia`
+
+---
+
+### `PATCH /reportes/:id`
+**Actualizar reporte**
+
+**Acceso:** Admin o soporte
+
+**Body:**
+```json
+{
+  "estado": "resuelto",
+  "respuesta": "El problema ha sido solucionado en la última actualización."
+}
+```
+
+---
+
+### `PATCH /soporte/mantenimiento`
+**Activar/desactivar modo mantenimiento**
+
+**Acceso:** Solo soporte (con `MAINTENANCE_GATE_SECRET`)
+
+**Body:**
+```json
+{
+  "activo": true,
+  "mensaje": "Sistema en mantenimiento. Volveremos pronto.",
+  "secret": "valor-de-MAINTENANCE_GATE_SECRET"
+}
+```
+
+**Efecto:** Bloquea acceso a usuarios regulares (solo admin y soporte pueden acceder)
+
+---
+
+### `GET /healthz`
+**Health check**
+
+**Acceso:** Público
+
+**Respuesta exitosa (200):**
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-11-02T11:30:00.000Z",
+  "uptime": 3600.45,
+  "database": "connected",
+  "memory": {
+    "used": "256 MB",
+    "total": "512 MB"
+  }
+}
+```
+
+**Uso:** Orquestadores (Docker, Kubernetes, DigitalOcean) lo usan para verificar que el servidor está vivo.
+
+---
+
+## 🤖 Servicio Groq (Texto)
+
+### Configuración
+
+**Archivo:** `services/groqService.js`
+
+**Modelo por defecto:** `llama3-70b-8192`
+
+**Características:**
+- 70 mil millones de parámetros
+- Contexto de 8,192 tokens
+- Velocidad ultrarrápida (inferencia en ms)
+- Soporta múltiples idiomas
+
+### Construcción de Prompts
+
+```javascript
+function construirPrompt(tema, idioma, numeroSlides, detailLevel, estilo) {
+  const detallesNivel = {
+    'Brief': '3 bullets por slide (8-12 palabras cada uno), 2 oraciones descriptivas',
+    'Medium': '4 bullets por slide (10-18 palabras cada uno), 3 oraciones descriptivas',
+    'Detailed': '5 bullets por slide (15-25 palabras cada uno), 4 oraciones descriptivas'
+  };
+
+  const estilosPrompt = {
+    'Professional': 'Usa lenguaje corporativo, datos precisos, métricas y KPIs. Incluye casos de estudio empresariales.',
+    'Casual': 'Usa lenguaje cotidiano, analogías simples, tono conversacional y ejemplos del día a día.',
+    'Academic': 'Usa terminología científica, análisis crítico, teorías y estudios de investigación.'
+  };
+
+  return `Eres un experto en crear presentaciones educativas profesionales.
+
+Tema: "${tema}"
+Idioma: ${idioma}
+Número de slides: ${numeroSlides}
+Nivel de detalle: ${detailLevel} - ${detallesNivel[detailLevel]}
+Estilo: ${estilo} - ${estilosPrompt[estilo]}
+
+Genera una presentación completa siguiendo EXACTAMENTE este formato JSON:
+
+{
+  "tema": "${tema}",
+  "slides": [
+    {
+      "titulo": "Título conciso y atractivo",
+      "contenido": "Descripción detallada en ${detallesNivel[detailLevel].split(',')[1]}",
+      "bullets": ["Bullet point 1", "Bullet point 2", ...]
+    }
+  ]
+}
+
+REQUISITOS IMPORTANTES:
+1. PRIMERA SLIDE: Debe ser portada con título principal y subtítulo descriptivo
+2. ÚLTIMA SLIDE: Debe ser de conclusiones o cierre
+3. Cada bullet debe ser informativo y específico al tema
+4. El contenido debe ser coherente y educativo
+5. Responde SOLO con el JSON, sin texto adicional
+6. Asegura que el JSON sea válido (comillas dobles, comas correctas)`;
+}
+```
+
+### Manejo de Respuestas
+
+```javascript
+async function generarEsquema(tema, opciones) {
+  try {
+    const prompt = construirPrompt(tema, opciones.idioma, opciones.numeroSlides, 
+                                   opciones.detailLevel, opciones.estilo);
+    
+    const response = await groqClient.chat.completions.create({
+      model: 'llama3-70b-8192',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 4096
+    });
+
+    const contenido = response.choices[0].message.content.trim();
+    
+    // Limpiar respuesta (remover markdown, backticks, etc.)
+    const jsonLimpio = contenido
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim();
+
+    const esquema = JSON.parse(jsonLimpio);
+    
+    // Validar estructura
+    if (!esquema.slides || !Array.isArray(esquema.slides)) {
+      throw new Error('Respuesta de Groq no tiene formato válido');
+    }
+
+    return esquema;
+  } catch (error) {
+    console.error('Error en Groq:', error);
+    throw new Error('No se pudo generar el esquema de presentación');
+  }
+}
+```
+
+---
+
+## 🎨 Servicio Gemini (Imágenes)
+
+### Configuración
+
+**Archivo:** `services/geminiService.js`
+
+**Modelos:**
+- Principal: `gemini-2.0-flash-preview-image-generation`
+- Fallback: `gemini-2.5-flash-image`
+
+### Sistema de Fallback Automático
+
+```javascript
+async function generarImagen(prompt, slideNumero, presentacionId) {
+  let modelo = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.0-flash-preview-image-generation';
+  
+  try {
+    return await intentarGenerarConModelo(modelo, prompt, slideNumero, presentacionId);
+  } catch (error) {
+    // Detectar si debe usar fallback
+    if (debeUsarFallback(error)) {
+      console.warn(`[Gemini] Modelo ${modelo} falló, usando fallback`);
+      modelo = process.env.GEMINI_IMAGE_MODEL_FALLBACK || 'gemini-2.5-flash-image';
+      return await intentarGenerarConModelo(modelo, prompt, slideNumero, presentacionId);
+    }
+    throw error;
+  }
+}
+
+function debeUsarFallback(error) {
+  const status = error.status || error.response?.status;
+  const message = error.message?.toLowerCase() || '';
+  
+  return (
+    [400, 403, 404].includes(status) ||
+    message.includes('not found') ||
+    message.includes('unsupported') ||
+    message.includes('deprecated')
+  );
+}
+```
+
+### Optimización de Prompts
+
+```javascript
+function construirPromptImagen(contenidoSlide, estilo, idioma) {
+  const estilosVisuales = {
+    'Professional': 'fotorealista, corporativo, limpio, profesional, iluminación suave, alta calidad, 4K',
+    'Casual': 'ilustración moderna, colores vibrantes, estilo flat design, friendly, accesible',
+    'Academic': 'diagrama técnico preciso, científico, educativo, esquemático, colores académicos'
+  };
+
+  const instruccionesIdioma = {
+    'Español': 'sin texto en español',
+    'English': 'no text in english',
+    'French': 'sans texte en français'
+  };
+
+  return `Generate a high-quality ${estilosVisuales[estilo]} image representing: "${contenidoSlide}". 
+  16:9 aspect ratio, ${instruccionesIdioma[idioma]}, no watermarks, professional composition.`;
+}
+```
+
+### Procesamiento y Almacenamiento
+
+```javascript
+async function guardarImagen(base64Data, presentacionId, slideNumero) {
+  const buffer = Buffer.from(base64Data, 'base64');
+  const extension = 'jpg';  // Gemini retorna JPEG por defecto
+  const filename = `slide_${presentacionId}_${slideNumero}.${extension}`;
+  const filepath = path.join(__dirname, '../public/images/slides', filename);
+
+  // Optimizar imagen con sharp
+  await sharp(buffer)
+    .resize(1920, 1080, { fit: 'cover' })
+    .jpeg({ quality: 85 })
+    .toFile(filepath);
+
+  return `/images/slides/${filename}`;
+}
+```
+
+---
+
+## 📝 Generación de Presentaciones (Flujo Completo)
+
+### 1. Usuario solicita generación
+
+```javascript
+// Frontend
+const response = await axios.post('/presentaciones/generar', {
+  tema: 'Machine Learning en Medicina',
+  numeroSlides: 12,
+  idioma: 'Español',
+  detailLevel: 'Detailed',
+  estilo: 'Academic',
+  plantilla: 'software',
+  fuente: 'roboto'
+}, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+```
+
+### 2. Backend orquesta el flujo
+
+```javascript
+// presentacionesController.js
+async function generar(req, res) {
+  try {
+    // 1. Validar parámetros
+    const { tema, numeroSlides, idioma, detailLevel, estilo, plantilla, fuente } = req.body;
+    
+    // 2. Generar esquema con Groq
+    const esquema = await groqService.generarEsquema(tema, {
+      numeroSlides,
+      idioma: idioma || 'Español',
+      detailLevel: detailLevel || 'Medium',
+      estilo: estilo || 'Professional'
+    });
+
+    // 3. Guardar en base de datos
+    const result = await pool.query(
+      `INSERT INTO presentaciones 
+       (usuario_id, tema, esquema_json, idioma, nivel_detalle, estilo_escritura, plantilla, fuente, estado)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'borrador')
+       RETURNING *`,
+      [req.usuario.usuario_id, tema, JSON.stringify(esquema), idioma, detailLevel, estilo, plantilla, fuente]
+    );
+
+    const presentacion = result.rows[0];
+
+    res.status(201).json({
+      message: 'Presentación generada exitosamente',
+      presentacion
+    });
+  } catch (error) {
+    console.error('Error al generar presentación:', error);
+    res.status(500).json({ error: 'No se pudo generar la presentación' });
+  }
+}
+```
+
+### 3. Usuario solicita imágenes (opcional)
+
+```javascript
+// Frontend
+await axios.post(`/presentaciones/${presentacionId}/imagenes`, {}, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+```
+
+### 4. Backend genera imágenes
+
+```javascript
+// presentacionesController.js
+async function generarImagenes(req, res) {
+  const { id } = req.params;
+  
+  // Obtener presentación
+  const presentacion = await obtenerPresentacion(id);
+  const { esquema_json, estilo_escritura, idioma } = presentacion;
+
+  const imagenes = [];
+  const errores = [];
+
+  // Generar imagen para cada slide
+  for (let i = 0; i < esquema_json.slides.length; i++) {
+    try {
+      const slide = esquema_json.slides[i];
+      const prompt = construirPromptImagen(slide.contenido, estilo_escritura, idioma);
+      
+      const urlImagen = await geminiService.generarImagen(prompt, i + 1, id);
+      
+      // Guardar en DB
+      await pool.query(
+        'INSERT INTO imagenes (presentacion_id, slide_numero, prompt, url_imagen, modelo_ia) VALUES ($1, $2, $3, $4, $5)',
+        [id, i + 1, prompt, urlImagen, 'gemini-2.0-flash-preview-image-generation']
+      );
+
+      imagenes.push({ slide_numero: i + 1, url_imagen: urlImagen });
+    } catch (error) {
+      errores.push({ slide_numero: i + 1, error: error.message });
+    }
+  }
+
+  res.json({ message: 'Imágenes generadas', imagenes, errores });
+}
+```
+
+### 5. Usuario exporta a PPTX
+
+```javascript
+// Frontend
+const response = await axios.get(`/presentaciones/${id}/export`, {
+  headers: { Authorization: `Bearer ${token}` },
+  responseType: 'blob'
+});
+
+const url = window.URL.createObjectURL(new Blob([response.data]));
+const link = document.createElement('a');
+link.href = url;
+link.download = 'presentacion.pptx';
+link.click();
+```
+
+### 6. Backend genera PPTX
+
+```javascript
+// pptService.js
+async function generarPresentacion(presentacion, imagenes) {
+  const pptx = new PptxGenJS();
+  
+  // Aplicar plantilla
+  const tema = pptThemes[presentacion.plantilla] || pptThemes.default;
+  
+  // Slide de portada
+  const portada = pptx.addSlide();
+  portada.background = { color: tema.background };
+  portada.addText(presentacion.tema, {
+    x: 0.5,
+    y: 2.5,
+    w: 9,
+    h: 1.5,
+    fontSize: 44,
+    bold: true,
+    color: tema.titleColor,
+    align: 'center',
+    fontFace: presentacion.fuente || 'Calibri'
+  });
+
+  // Slides de contenido
+  presentacion.esquema_json.slides.forEach((slide, index) => {
+    const pptSlide = pptx.addSlide();
+    pptSlide.background = { color: tema.background };
+
+    // Título
+    pptSlide.addText(slide.titulo, {
+      x: 0.5, y: 0.5, w: 9, h: 0.8,
+      fontSize: 32,
+      bold: true,
+      color: tema.titleColor,
+      fontFace: presentacion.fuente
+    });
+
+    // Bullets
+    pptSlide.addText(slide.bullets.map(b => ({ text: b, options: { bullet: true } })), {
+      x: 0.5, y: 1.5, w: 5.5, h: 4,
+      fontSize: 18,
+      color: tema.textColor,
+      fontFace: presentacion.fuente
+    });
+
+    // Imagen (si existe)
+    const imagen = imagenes.find(img => img.slide_numero === index + 1);
+    if (imagen) {
+      pptSlide.addImage({
+        path: path.join(__dirname, '../public', imagen.url_imagen),
+        x: 6.5, y: 1.5, w: 3, h: 4
+      });
+    }
+  });
+
+  // Generar archivo
+  const buffer = await pptx.write({ outputType: 'nodebuffer' });
+  return buffer;
+}
+```
+
+---
+
+## 🔐 Sistema de Roles
+
+### Roles Disponibles
+
+| Rol | Descripción | Permisos |
+|-----|-------------|----------|
+| **usuario** | Profesor o estudiante regular | Crear/editar/eliminar sus propias presentaciones, ver dashboard personal, crear reportes |
+| **admin** | Coordinador o director | Todo lo de usuario + gestionar usuarios, ver dashboard global, acceder a todas las presentaciones, gestionar reportes |
+| **soporte** | Equipo técnico | Todo lo de admin + activar modo mantenimiento, ver logs del sistema, gestionar infraestructura |
+
+### Middleware de Autorización
+
+```javascript
+// roleMiddleware.js
+function verificarRol(rolesPermitidos) {
+  return (req, res, next) => {
+    if (!req.usuario) {
+      return res.status(401).json({ error: 'No autenticado' });
+    }
+
+    if (!rolesPermitidos.includes(req.usuario.rol)) {
+      return res.status(403).json({ 
+        error: 'Sin permisos',
+        requiere: rolesPermitidos,
+        tienes: req.usuario.rol
+      });
+    }
+
+    next();
+  };
+}
+
+// Exportar helpers
+module.exports = {
+  verificarRol,
+  soloAdmin: verificarRol(['admin']),
+  soloSoporte: verificarRol(['soporte']),
+  adminOSoporte: verificarRol(['admin', 'soporte']),
+  todos: verificarRol(['usuario', 'admin', 'soporte'])
+};
+```
+
+### Uso en Rutas
+
+```javascript
+const { verificarToken } = require('../middlewares/authMiddleware');
+const { soloAdmin, adminOSoporte } = require('../middlewares/roleMiddleware');
+
+// Solo admins
+router.get('/admin/usuarios', verificarToken, soloAdmin, adminController.listarUsuarios);
+
+// Admins y soporte
+router.get('/admin/presentaciones', verificarToken, adminOSoporte, adminController.listarTodasPresentaciones);
+
+// Todos los usuarios autenticados
+router.get('/presentaciones/mias', verificarToken, presentacionesController.listarMias);
+```
+
+---
+
+## 🔧 Solución de Problemas Detallada
 
 ## Características principales
 
