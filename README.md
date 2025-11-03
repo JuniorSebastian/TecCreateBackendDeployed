@@ -3722,22 +3722,968 @@ Ejemplo de uso:
   ```
   Pega el contenido resultante en la variable `DATABASE_SSL_CA_B64` en tu panel de despliegue.
 
-## Solución de problemas
+---
 
-- **`too many connections`**: reduce `PGPOOL_MAX`, reinicia la base, usa PgBouncer o sube el plan de Postgres.
-- **`redirect_uri_mismatch`**: la URI configurada en Google Cloud no coincide con `GOOGLE_CALLBACK_URL`.
-- **`503 Servicio IA no configurado`**: falta `GROQ_API_KEY` o `GEMINI_API_KEY`.
-- **CORS bloqueado**: añade tu frontend a `ALLOWED_ORIGINS`.
-- **Dashboard 500**: ejecuta `estructura_presentador_ia.sql` para crear columnas/tablas faltantes.
-- **Sesiones persistentes**: considera migrar el store a Redis/Postgres si habrá escalado horizontal.
+## 🔧 Solución de Problemas Detallada
 
-## Documentación complementaria
+### Problemas de Base de Datos
 
-- `docs/Backend-Manual.md`: guía técnica completa (infraestructura, despliegue, endpoints, seguridad).
-- `docs/Manual-Usuario-Backend.md`: guía operativa para profesores, soporte y usuarios (funcionalidades, pasos y ejemplos de API).
-- `render.yaml`: blueprint/manifest opcional (servicio web + Postgres + variables clave). Adáptalo a tu proveedor.
-- `estructura_presentador_ia.sql`: script de creación y actualización del esquema de base de datos.
+#### `Error: too many connections`
+
+**Causa:** PostgreSQL alcanzó el límite de conexiones simultáneas.
+
+**Solución:**
+```env
+# 1. Reducir máximo de conexiones en pool
+PGPOOL_MAX=3  # Para planes básicos (25 conexiones max)
+```
+
+```sql
+-- 2. Ver conexiones actuales
+SELECT count(*) FROM pg_stat_activity;
+
+-- 3. Matar conexiones idle (si es necesario)
+SELECT pg_terminate_backend(pid) 
+FROM pg_stat_activity 
+WHERE state = 'idle' AND state_change < NOW() - INTERVAL '10 minutes';
+```
+
+**Prevención:**
+- Usa PgBouncer como connection pooler
+- Upgrade a un plan con más conexiones
+- Asegúrate de cerrar conexiones correctamente
 
 ---
 
-Este README es independiente de dominios o bases específicas. Sustituye las variables y URLs por las de tu ambiente y utiliza los scripts provistos para tener una instalación reproducible.
+#### `Error: self signed certificate`
+
+**Causa:** PostgreSQL usa certificado autofirmado y `rejectUnauthorized` está en `true`.
+
+**Solución temporal (solo desarrollo):**
+```env
+DATABASE_SSL_ALLOW_SELF_SIGNED=true
+```
+
+**Solución correcta (producción):**
+```env
+DATABASE_SSL_ALLOW_SELF_SIGNED=false
+DATABASE_SSL_CA_B64=<certificado-CA-en-base64>
+```
+
+---
+
+#### `Error: Connection timeout`
+
+**Causa:** La base de datos no responde a tiempo.
+
+**Solución:**
+```env
+# Aumentar timeout
+PGPOOL_CONNECTION_TIMEOUT=10000  # 10 segundos
+```
+
+**Verificar conectividad:**
+```bash
+# Probar conexión manual
+psql "postgresql://user:pass@host:5432/db"
+
+# Verificar firewall/seguridad en proveedor cloud
+# DigitalOcean: Trusted Sources debe incluir tu IP o 0.0.0.0/0
+```
+
+---
+
+### Problemas de Autenticación
+
+#### `Error: redirect_uri_mismatch`
+
+**Causa:** La URI de callback no coincide con Google Cloud Console.
+
+**Solución:**
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
+2. APIs & Services → Credentials → Tu OAuth Client
+3. Authorized redirect URIs debe incluir **EXACTAMENTE**:
+   ```
+   https://api.teccreate.edu/auth/google/callback
+   ```
+4. Verifica que `GOOGLE_CALLBACK_URL` tenga el mismo valor
+
+**⚠️ Atención:**
+- No trailing slash: `❌ .../callback/` vs `✅ .../callback`
+- Protocolo correcto: `https://` en producción
+- Dominio exacto (sin www si no lo usas)
+
+---
+
+#### `Error: invalid_client`
+
+**Causa:** `GOOGLE_CLIENT_ID` o `GOOGLE_CLIENT_SECRET` incorrectos.
+
+**Solución:**
+1. Verifica que copiaste correctamente las credenciales
+2. Regenera las credenciales en Google Cloud si es necesario
+3. Asegúrate de no tener espacios extras al pegar
+
+---
+
+#### `Error: Token inválido o expirado (403)`
+
+**Causa:** El JWT del usuario expiró o es inválido.
+
+**Solución (frontend):**
+```javascript
+// Interceptor de Axios para refrescar token
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 403) {
+      // Token expirado, redirigir a login
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+**Configuración backend:**
+```env
+# Aumentar duración del token si es necesario
+JWT_EXPIRES_IN=7d  # 7 días en lugar de 1d
+```
+
+---
+
+#### `Error: Correo no autorizado`
+
+**Causa:** El email del usuario no está en `ADMIN_EMAILS`.
+
+**Solución:**
+```env
+# Agregar el correo a la whitelist
+ADMIN_EMAILS=existente@instituto.edu,nuevo@instituto.edu,otro@instituto.edu
+```
+
+**Nota:** Reinicia el servidor después de cambiar `ADMIN_EMAILS`.
+
+---
+
+### Problemas de Servicios IA
+
+#### `Error: 503 Service Unavailable (Groq)`
+
+**Causa:** No se puede conectar a Groq API.
+
+**Diagnóstico:**
+```bash
+# Verificar que la clave funciona
+curl https://api.groq.com/openai/v1/models \
+  -H "Authorization: Bearer $GROQ_API_KEY"
+```
+
+**Solución:**
+1. Verifica que `GROQ_API_KEY` esté configurada
+2. Verifica que la clave sea válida (no expirada)
+3. Chequea límites de rate en [groq.com/console](https://groq.com/console)
+
+**Degradación elegante:**
+- El sistema permite crear presentaciones manualmente sin Groq
+- Implementa un sistema de cola si tienes muchas peticiones simultáneas
+
+---
+
+#### `Error: Gemini API - Model not found`
+
+**Causa:** El modelo especificado no existe o no está disponible.
+
+**Solución:**
+```env
+# Usar modelos correctos
+GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
+GEMINI_IMAGE_MODEL_FALLBACK=gemini-2.5-flash-image
+```
+
+**El sistema tiene fallback automático:**
+- Si el modelo principal falla → usa el modelo de fallback
+- Si ambos fallan → retorna error descriptivo
+
+---
+
+#### `Error: Rate limit exceeded (429)`
+
+**Causa:** Superaste el límite de peticiones por minuto.
+
+**Solución:**
+```javascript
+// Implementar cola con delay
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function generarImagenesConCola(slides, presentacionId) {
+  const imagenes = [];
+  
+  for (const [index, slide] of slides.entries()) {
+    try {
+      const imagen = await geminiService.generarImagen(slide.contenido, index + 1, presentacionId);
+      imagenes.push(imagen);
+      
+      // Esperar 1 segundo entre peticiones
+      await delay(1000);
+    } catch (error) {
+      console.error(`Error slide ${index + 1}:`, error);
+    }
+  }
+  
+  return imagenes;
+}
+```
+
+---
+
+### Problemas de CORS
+
+#### `Error: CORS policy blocked`
+
+**Causa:** El origen del frontend no está en `ALLOWED_ORIGINS`.
+
+**Solución:**
+```env
+ALLOWED_ORIGINS=https://app.teccreate.edu,https://admin.teccreate.edu,http://localhost:5173
+```
+
+**Verificar configuración:**
+```javascript
+// En el navegador (consola)
+fetch('https://api.teccreate.edu/healthz')
+  .then(res => console.log('CORS OK'))
+  .catch(err => console.error('CORS blocked:', err));
+```
+
+**Importante:**
+- No trailing slashes en URLs
+- Separar con comas SIN espacios
+- Incluir protocolo completo (http:// o https://)
+
+---
+
+### Problemas de Exportación PPTX
+
+#### `Error: Cannot find module 'pptxgenjs'`
+
+**Causa:** Dependencia no instalada.
+
+**Solución:**
+```bash
+npm install pptxgenjs
+```
+
+---
+
+#### `Error: Invalid image path`
+
+**Causa:** La imagen no existe en `public/images/slides/`.
+
+**Solución:**
+```javascript
+// Verificar que la imagen existe antes de insertarla
+const fs = require('fs');
+const imagePath = path.join(__dirname, '../public', imagen.url_imagen);
+
+if (fs.existsSync(imagePath)) {
+  pptSlide.addImage({ path: imagePath, x, y, w, h });
+} else {
+  console.warn(`Imagen no encontrada: ${imagePath}`);
+}
+```
+
+---
+
+#### `Error: PPTX generado está corrupto`
+
+**Causa:** Problema con fuentes o imágenes.
+
+**Solución:**
+1. Verifica que las fuentes estén disponibles
+2. Asegura que las imágenes sean válidas (JPEG/PNG)
+3. Prueba con plantilla básica:
+
+```javascript
+// Generar PPTX mínimo para debugging
+const pptx = new PptxGenJS();
+const slide = pptx.addSlide();
+slide.addText('Test', { x: 1, y: 1, fontSize: 24 });
+const buffer = await pptx.write({ outputType: 'nodebuffer' });
+// Si esto funciona, el problema está en tus datos
+```
+
+---
+
+### Problemas de Rendimiento
+
+#### `Error: Memory limit exceeded`
+
+**Causa:** Node.js se queda sin memoria (generando muchas imágenes o PPTX grandes).
+
+**Solución:**
+```bash
+# Aumentar límite de memoria
+node --max-old-space-size=4096 index.js  # 4GB
+```
+
+**En producción (DigitalOcean App Platform):**
+```yaml
+# .do/app.yaml
+services:
+  - name: backend
+    instance_size_slug: professional-xs  # 1GB RAM
+    # o
+    instance_size_slug: professional-s   # 2GB RAM
+```
+
+---
+
+#### `Error: Request timeout`
+
+**Causa:** Generación de presentación tarda demasiado.
+
+**Solución:**
+```javascript
+// En el frontend, aumentar timeout
+axios.post('/presentaciones/generar', data, {
+  headers: { Authorization: `Bearer ${token}` },
+  timeout: 60000  // 60 segundos
+});
+```
+
+**En Express (backend):**
+```javascript
+// Aumentar timeout global
+app.use((req, res, next) => {
+  req.setTimeout(120000);  // 2 minutos
+  res.setTimeout(120000);
+  next();
+});
+```
+
+---
+
+### Problemas de Deployment
+
+#### `Error: Application failed to start (DigitalOcean)`
+
+**Diagnóstico:**
+1. Ve a **Logs** en el panel de DigitalOcean
+2. Busca el error específico
+
+**Errores comunes:**
+
+**"Cannot find module 'X'"**
+```bash
+# Asegúrate de que package.json tiene todas las dependencias
+npm install
+git add package.json package-lock.json
+git commit -m "fix: add missing dependencies"
+git push
+```
+
+**"Port already in use"**
+```env
+# DigitalOcean usa PORT=8080 por defecto
+# Asegúrate de usar process.env.PORT
+PORT=8080
+```
+
+**"Database connection failed"**
+```env
+# Verifica DATABASE_URL y SSL settings
+DATABASE_URL=postgresql://...
+DATABASE_SSL=true
+DATABASE_SSL_CA_B64=<base64-cert>
+```
+
+---
+
+#### `Error: Build failed`
+
+**Causa:** Error durante `npm install`.
+
+**Solución:**
+```json
+// package.json - asegurar engines
+{
+  "engines": {
+    "node": ">=18.17.0 <21"
+  }
+}
+```
+
+**Limpiar cache:**
+```bash
+# Localmente
+rm -rf node_modules package-lock.json
+npm install
+
+# En DigitalOcean: forzar rebuild
+# Settings → Force Rebuild and Deploy
+```
+
+---
+
+### Logs y Debugging
+
+#### Habilitar logs detallados
+
+```env
+# .env
+LOG_LEVEL=debug  # trace | debug | info | warn | error
+ENABLE_REQUEST_LOGGING=true
+```
+
+```javascript
+// index.js - agregar logger de peticiones
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+```
+
+---
+
+#### Ver logs en producción
+
+**DigitalOcean:**
+```bash
+# Desde el panel: Runtime Logs
+# O con doctl CLI
+doctl apps logs <app-id> --follow
+```
+
+**Render:**
+```bash
+# Desde el panel: Logs tab (auto-refresh)
+```
+
+**Servidor propio (PM2):**
+```bash
+pm2 logs teccreate-backend
+pm2 logs teccreate-backend --lines 100
+pm2 logs teccreate-backend --err  # Solo errores
+```
+
+---
+
+## 🛠️ Scripts Útiles
+
+El proyecto incluye varios scripts en `scripts/` para mantenimiento y debugging:
+
+### `query-user.js`
+**Consultar usuario por email**
+
+```bash
+node scripts/query-user.js profesor@instituto.edu
+```
+
+**Output:**
+```
+Usuario encontrado:
+- ID: 5
+- Nombre: Juan Pérez
+- Email: profesor@instituto.edu
+- Rol: usuario
+- Estado: activo
+- Último acceso: 2025-11-02 09:30:00
+- Presentaciones: 12
+```
+
+---
+
+### `list-reportes.js`
+**Listar reportes de soporte**
+
+```bash
+node scripts/list-reportes.js
+
+# Filtrar por estado
+node scripts/list-reportes.js --estado=abierto
+
+# Filtrar por prioridad
+node scripts/list-reportes.js --prioridad=alta
+```
+
+---
+
+### `clear-support-logs.js`
+**Limpiar logs antiguos**
+
+```bash
+# Eliminar logs de más de 30 días
+node scripts/clear-support-logs.js --days=30
+```
+
+---
+
+### `seed-support-logs.js`
+**Generar datos de prueba**
+
+```bash
+# Crear 50 reportes de prueba
+node scripts/seed-support-logs.js --count=50
+```
+
+---
+
+### `test-maintenance-gate.js`
+**Probar modo mantenimiento**
+
+```bash
+node scripts/test-maintenance-gate.js
+```
+
+---
+
+## ✅ Mejores Prácticas
+
+### Seguridad
+
+1. **Nunca versionar secretos**
+   ```bash
+   # Verificar que .gitignore incluye:
+   .env
+   .env.local
+   .env.*.local
+   *.pem
+   *.key
+   *.crt
+   ```
+
+2. **Rotar secretos regularmente**
+   ```bash
+   # Generar nuevos secretos cada 3-6 meses
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+3. **Usar HTTPS en producción**
+   - Nunca desplegar sin SSL/TLS
+   - Configurar HSTS headers con Helmet
+   - Validar certificados (`DATABASE_SSL_CA_B64`)
+
+4. **Implementar rate limiting**
+   ```javascript
+   // Especialmente en endpoints sensibles
+   const loginLimiter = rateLimit({
+     windowMs: 15 * 60 * 1000,
+     max: 5
+   });
+   app.use('/auth/google', loginLimiter);
+   ```
+
+5. **Sanitizar inputs**
+   ```javascript
+   // Siempre usar parámetros preparados
+   await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+   // NUNCA interpolar directamente: `... WHERE email = '${email}'`
+   ```
+
+---
+
+### Performance
+
+1. **Optimizar queries PostgreSQL**
+   ```sql
+   -- Crear índices para búsquedas frecuentes
+   CREATE INDEX idx_presentaciones_usuario_fecha 
+   ON presentaciones(usuario_id, fecha_creacion DESC);
+   
+   -- Analizar queries lentas
+   EXPLAIN ANALYZE SELECT * FROM presentaciones WHERE usuario_id = 5;
+   ```
+
+2. **Cachear respuestas frecuentes**
+   ```javascript
+   // Usar Redis para cachear dashboard
+   const cachedDashboard = await redis.get('dashboard:resumen');
+   if (cachedDashboard) {
+     return JSON.parse(cachedDashboard);
+   }
+   const dashboard = await calcularDashboard();
+   await redis.setex('dashboard:resumen', 300, JSON.stringify(dashboard)); // 5 min
+   ```
+
+3. **Comprimir respuestas**
+   ```javascript
+   const compression = require('compression');
+   app.use(compression());
+   ```
+
+4. **Paginar resultados grandes**
+   ```javascript
+   // Siempre limitar queries
+   const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+   const offset = (page - 1) * limit;
+   ```
+
+---
+
+### Mantenibilidad
+
+1. **Documentar código complejo**
+   ```javascript
+   /**
+    * Genera esquema de presentación con IA
+    * @param {string} tema - Tema de la presentación
+    * @param {Object} opciones - Configuración de generación
+    * @param {string} opciones.idioma - Español | English | French
+    * @param {number} opciones.numeroSlides - Entre 3 y 30
+    * @param {string} opciones.detailLevel - Brief | Medium | Detailed
+    * @returns {Promise<Object>} Esquema JSON con slides
+    */
+   async function generarEsquema(tema, opciones) { ... }
+   ```
+
+2. **Usar ESLint y Prettier**
+   ```bash
+   npm install --save-dev eslint prettier eslint-config-prettier
+   npx eslint --init
+   ```
+
+   ```json
+   // .eslintrc.json
+   {
+     "env": { "node": true, "es2021": true },
+     "extends": ["eslint:recommended", "prettier"],
+     "parserOptions": { "ecmaVersion": "latest" },
+     "rules": {
+       "no-console": "off",
+       "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+     }
+   }
+   ```
+
+3. **Testing (configuración básica)**
+   ```bash
+   npm install --save-dev jest supertest
+   ```
+
+   ```javascript
+   // __tests__/healthz.test.js
+   const request = require('supertest');
+   const app = require('../index');
+
+   describe('GET /healthz', () => {
+     it('should return 200 OK', async () => {
+       const res = await request(app).get('/healthz');
+       expect(res.statusCode).toBe(200);
+       expect(res.body.status).toBe('ok');
+     });
+   });
+   ```
+
+4. **Git commits descriptivos**
+   ```bash
+   # Formato: tipo(scope): descripción
+   git commit -m "feat(presentaciones): add image generation endpoint"
+   git commit -m "fix(auth): handle expired tokens correctly"
+   git commit -m "docs(readme): update deployment instructions"
+   git commit -m "refactor(services): extract prompt builder to helper"
+   ```
+
+---
+
+### Deployment
+
+1. **Variables de entorno por ambiente**
+   ```
+   .env.development
+   .env.staging
+   .env.production
+   ```
+
+2. **Health checks configurados**
+   ```yaml
+   # DigitalOcean app.yaml
+   health_check:
+     http_path: /healthz
+     initial_delay_seconds: 30
+     period_seconds: 10
+     timeout_seconds: 5
+     success_threshold: 1
+     failure_threshold: 3
+   ```
+
+3. **Rollback plan**
+   ```bash
+   # Etiquetar releases
+   git tag -a v1.2.0 -m "Release 1.2.0"
+   git push origin v1.2.0
+
+   # Rollback si es necesario
+   git checkout v1.1.0
+   git push deploy HEAD:main --force
+   ```
+
+4. **Monitoreo post-deploy**
+   - Verificar logs durante 15-30 min después del deploy
+   - Revisar métricas de CPU/RAM
+   - Probar endpoints críticos manualmente
+
+---
+
+## ❓ Preguntas Frecuentes (FAQ)
+
+### General
+
+**Q: ¿Puedo usar este backend sin el frontend de TecCreate?**  
+A: Sí, el backend es completamente independiente. Puedes consumir la API desde cualquier cliente (React, Vue, Angular, mobile apps, etc.) siempre que envíes el JWT en el header `Authorization: Bearer <token>`.
+
+**Q: ¿Cuánto cuesta operar este backend?**  
+A: Depende de tu infraestructura:
+- **Free tier**: DigitalOcean no tiene free tier para Apps, pero Render ofrece plan gratuito (con limitaciones)
+- **Mínimo recomendado**: ~$14-20/mes (App Platform Básico + PostgreSQL Básico en DigitalOcean)
+- **APIs IA**: Groq tiene tier gratuito generoso, Gemini cobra por uso (consultar precios actuales)
+
+**Q: ¿Soporta múltiples instituciones (multi-tenant)?**  
+A: Actualmente no está optimizado para multi-tenant. Necesitarías agregar un campo `institucion_id` a las tablas y filtrar por él. Sin embargo, puedes desplegar instancias separadas para cada institución.
+
+---
+
+### Autenticación
+
+**Q: ¿Puedo usar otro provider OAuth además de Google?**  
+A: Sí, Passport.js soporta múltiples estrategias. Para agregar Microsoft, Facebook, etc., instala la estrategia correspondiente y configúrala en `config/passport.js`.
+
+**Q: ¿Cómo agrego más correos institucionales?**  
+A: Edita la variable `ADMIN_EMAILS` agregando los correos separados por comas, luego reinicia el servidor.
+
+**Q: ¿Puedo permitir registro abierto?**  
+A: Sí, pero requiere modificar `config/passport.js`. Actualmente la whitelist es por seguridad institucional. Si lo abres, implementa verificación por email.
+
+---
+
+### Presentaciones
+
+**Q: ¿Cuántas slides puedo generar como máximo?**  
+A: El límite está en 30 slides (configurado en validación). Puedes aumentarlo modificando el validator en el controller, pero considera que más slides = más tiempo de generación y mayor consumo de tokens.
+
+**Q: ¿Puedo generar presentaciones sin usar IA?**  
+A: Sí, usa `POST /presentaciones` con tu propio `esquema_json` en lugar de `POST /presentaciones/generar`.
+
+**Q: ¿Las imágenes generadas son libres de derechos?**  
+A: Las imágenes generadas por Gemini están sujetas a los [términos de servicio de Google AI](https://ai.google.dev/terms). Revísalos antes de uso comercial.
+
+---
+
+### Deployment
+
+**Q: ¿Puedo desplegar en AWS/Azure/GCP?**  
+A: Sí, el backend es estándar Node.js/Express. Puedes desplegarlo en:
+- **AWS**: Elastic Beanstalk, ECS, Lambda (con ajustes)
+- **Azure**: App Service, Container Instances
+- **GCP**: Cloud Run, App Engine
+
+**Q: ¿Necesito usar Docker?**  
+A: No es obligatorio. Docker facilita el despliegue pero puedes correr directamente con `node index.js` en cualquier servidor.
+
+**Q: ¿Cómo actualizo el código en producción?**  
+A:
+```bash
+# Con Git deploy (DigitalOcean/Render)
+git push deploy main
+
+# Con PM2 (servidor propio)
+git pull
+npm install
+pm2 restart teccreate-backend
+```
+
+---
+
+### Performance
+
+**Q: ¿Cuántas peticiones concurrentes soporta?**  
+A: Depende de tu infraestructura:
+- **Plan básico**: ~50-100 req/s (limitado por PostgreSQL connections)
+- **Con Redis + load balancer**: Miles de req/s
+
+**Q: ¿Cómo escalo horizontalmente?**  
+A:
+1. Migrar sesiones a Redis (`REDIS_URL`)
+2. Usar load balancer (Nginx, DigitalOcean Load Balancer)
+3. Desplegar múltiples instancias del backend
+4. Considerar CDN para archivos estáticos
+
+---
+
+### Troubleshooting
+
+**Q: ¿Dónde veo los logs de errores?**  
+A:
+- **Local**: Terminal donde corre el servidor
+- **DigitalOcean**: Panel → Runtime Logs
+- **Render**: Panel → Logs tab
+- **PM2**: `pm2 logs teccreate-backend`
+
+**Q: ¿Qué hago si el servidor no arranca?**  
+A:
+1. Verifica logs para el error específico
+2. Comprueba que todas las variables de entorno están configuradas
+3. Prueba conexión a PostgreSQL manualmente
+4. Verifica que el puerto no está en uso
+
+**Q: ¿Cómo recupero presentaciones eliminadas accidentalmente?**  
+A: Si tienes backups de PostgreSQL:
+```bash
+# Restaurar desde backup
+psql "DATABASE_URL" < backup_20251102.sql
+```
+Sin backups, los datos no son recuperables (configura backups automáticos).
+
+---
+
+## 📚 Documentación Complementaria
+
+Este README cubre los aspectos fundamentales. Para información más específica:
+
+### Documentación Interna
+
+- **`docs/Backend-Manual.md`**: Manual técnico exhaustivo
+  - Arquitectura detallada
+  - Diagramas de secuencia
+  - Especificaciones de API completas
+  - Guías de troubleshooting avanzado
+
+- **`docs/Manual-Usuario-Backend.md`**: Guía operativa
+  - Dirigida a profesores y coordinadores
+  - Ejemplos de uso de la API
+  - Tutoriales paso a paso
+  - Casos de uso comunes
+
+- **`docs/gestion-usuarios.md`**: Gestión de usuarios
+  - Flujo de aprobación de usuarios
+  - Cambio de roles
+  - Suspensión y reactivación
+  - Auditoría de actividad
+
+- **`docs/roles-permissions.md`**: Matriz de permisos
+  - Tabla completa de permisos por rol
+  - Restricciones de acceso
+  - Casos especiales
+
+### Archivos de Configuración
+
+- **`render.yaml`**: Blueprint para Render
+  - Definición de infraestructura como código
+  - Variables de entorno plantilla
+  - Configuración de base de datos
+
+- **`estructura_presentador_ia.sql`**: Schema PostgreSQL
+  - Todas las tablas con comentarios
+  - Índices optimizados
+  - Triggers y funciones
+  - Datos de ejemplo (opcional)
+
+- **`.env.example`**: Plantilla de variables
+  - Todas las variables necesarias
+  - Valores de ejemplo seguros
+  - Comentarios explicativos
+
+### Recursos Externos
+
+- **Node.js**: [nodejs.org/docs](https://nodejs.org/docs)
+- **Express**: [expressjs.com](https://expressjs.com)
+- **PostgreSQL**: [postgresql.org/docs](https://www.postgresql.org/docs/)
+- **Passport.js**: [passportjs.org](https://www.passportjs.org/)
+- **Groq API**: [groq.com/docs](https://groq.com/docs)
+- **Google Gemini**: [ai.google.dev](https://ai.google.dev/)
+- **pptxgenjs**: [gitbrent.github.io/PptxGenJS](https://gitbrent.github.io/PptxGenJS/)
+
+---
+
+## 🤝 Soporte y Contribuciones
+
+### Reportar Problemas
+
+Si encuentras un bug o tienes una sugerencia:
+
+1. **Revisa issues existentes**: [GitHub Issues](https://github.com/JuniorSebastian/TecCreateBackendLocal/issues)
+2. **Crea un nuevo issue** con:
+   - Descripción clara del problema
+   - Pasos para reproducir
+   - Logs relevantes
+   - Versión de Node.js y sistema operativo
+
+### Contribuir
+
+1. Fork el repositorio
+2. Crea una rama para tu feature: `git checkout -b feature/nueva-funcionalidad`
+3. Commit tus cambios: `git commit -m "feat: agregar nueva funcionalidad"`
+4. Push a tu fork: `git push origin feature/nueva-funcionalidad`
+5. Abre un Pull Request
+
+**Convenciones de código:**
+- Sigue el estilo existente (considera usar ESLint)
+- Documenta funciones públicas
+- Agrega tests si es posible
+- Actualiza README si cambias comportamiento
+
+---
+
+## 📄 Licencia
+
+Este proyecto está desarrollado para uso educativo en instituciones técnicas. Consulta con el equipo de TecCreate para términos de uso específicos.
+
+---
+
+## 🎓 Créditos
+
+**Desarrollado por:** Equipo TecCreate  
+**Mantenido por:** JuniorSebastian  
+**Institución:** [Tu Institución Educativa]
+
+**Tecnologías principales:**
+- Node.js & Express.js
+- PostgreSQL
+- Google OAuth 2.0
+- Groq (LLaMA 3)
+- Google Gemini
+- pptxgenjs
+
+---
+
+## 📞 Contacto
+
+- **Email de soporte**: Configurado en `SUPPORT_EMAIL`
+- **GitHub**: [TecCreateBackendLocal](https://github.com/JuniorSebastian/TecCreateBackendLocal)
+- **Documentación**: Este README y `docs/`
+
+---
+
+## 🔄 Changelog
+
+### v1.2.0 (2025-11-02)
+- ✨ Documentación exhaustiva del README
+- ✨ Sistema de fallback automático para modelos Gemini
+- ✨ Soporte para 3 niveles de detalle (Brief, Medium, Detailed)
+- ✨ 3 estilos de escritura (Professional, Casual, Academic)
+- ✨ 7 plantillas visuales para diferentes carreras
+- 🐛 Fix: Manejo de dependencias opcionales (pino, helmet)
+- 📚 Docs: Guías completas de deployment para DigitalOcean y Render
+
+### v1.1.0 (2025-10-15)
+- ✨ Generación de imágenes con Gemini
+- ✨ Compartir presentaciones con QR
+- ✨ Dashboard de administración
+- 🔧 Mejoras en pool de conexiones PostgreSQL
+
+### v1.0.0 (2025-09-01)
+- 🎉 Lanzamiento inicial
+- ✨ Autenticación con Google OAuth
+- ✨ Generación de presentaciones con Groq
+- ✨ Exportación a PPTX
+- ✨ Sistema de roles (usuario, admin, soporte)
+
+---
+
+**¿Necesitas ayuda?** Revisa la sección [Solución de Problemas](#-solución-de-problemas-detallada) o contacta al equipo de soporte.
+
+**¿Quieres contribuir?** Lee la sección [Soporte y Contribuciones](#-soporte-y-contribuciones).
+
+**¡Gracias por usar TecCreate Backend! 🚀**
