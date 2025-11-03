@@ -1,6 +1,9 @@
 # 🎯 TecCreate Backend - Documentación Completa
 
-**Backend empresarial en Node.js/Express para generación de presentaciones asistidas por IA** con autenticación institucional, multi-tenant, roles avanzados y exportación PPTX profesional. Integra Google OAuth 2.0, PostgreSQL, Groq (generación de texto), Gemini (generación de imágenes) y arquitectura modular escalable.
+**Backend empresarial desarrollado para Tecsup** - Plataforma de generación de presentaciones asistidas por IA para docentes e instructores. Sistema integral con autenticación institucional, gestión multi-rol, y exportación PPTX profesional. Integra Google OAuth 2.0, PostgreSQL, Groq (generación de texto), Gemini (generación de imágenes) y arquitectura modular escalable.
+
+**Institución:** Instituto de Educación Superior Tecsup  
+**Carreras soportadas:** Diseño y Desarrollo de Software, Gestión y Mantenimiento de Maquinaria, Mecatrónica Industrial, Procesos Químicos y Metalúrgicos
 
 ---
 
@@ -65,14 +68,14 @@
 
 ## 🎯 Resumen Ejecutivo
 
-**TecCreate Backend** es una plataforma empresarial robusta diseñada para instituciones educativas que permite a profesores y coordinadores generar presentaciones profesionales asistidas por IA en minutos. El sistema maneja autenticación institucional, control de acceso basado en roles, generación de contenido con IA, exportación a formatos estándar y administración centralizada.
+**TecCreate Backend** es una plataforma empresarial robusta diseñada específicamente para **Tecsup** (Instituto de Educación Superior) que permite a docentes, instructores y coordinadores generar presentaciones profesionales asistidas por IA en minutos. El sistema maneja autenticación institucional con correos de Tecsup, control de acceso basado en roles, generación de contenido con IA especializada para carreras técnicas, exportación a formatos estándar y administración centralizada.
 
 ### ¿Por qué TecCreate?
 
-✅ **Autenticación Institucional**: Integración con Google Workspace para control de acceso seguro  
+✅ **Autenticación Institucional Tecsup**: Integración con Google Workspace para control de acceso seguro con correos @tecsup.edu.pe  
 ✅ **IA Avanzada**: Generación de contenido con Groq (70B parámetros) e imágenes con Gemini  
 ✅ **Multi-idioma**: Soporte para Español, English y Français  
-✅ **Plantillas Profesionales**: 7 temas visuales optimizados para carreras técnicas  
+✅ **Plantillas para Carreras Tecsup**: 7 temas visuales optimizados (Software, Maquinaria, Mecatrónica, Química)  
 ✅ **Escalable**: Arquitectura modular preparada para crecimiento institucional  
 ✅ **Seguro**: JWT, CORS configurado, SSL/TLS, protección contra ataques comunes  
 
@@ -527,9 +530,9 @@ Guía visual (con capturas o descripciones detalladas) para configurar Google OA
 2. Seleccionar tipo (Internal para Google Workspace, External para público)
 3. Completar información:
    - App name: TecCreate
-   - User support email: tu-email@instituto.edu
+   - User support email: soporte@tecsup.edu.pe
    - Logo (opcional)
-   - App domain (tu dominio)
+   - App domain (tecsup.teccreate.edu)
 4. Scopes: Agregar `userinfo.email`, `userinfo.profile`
 5. Test users (si es External): Agregar emails de prueba
 6. Guardar y continuar
@@ -556,8 +559,8 @@ Guía visual (con capturas o descripciones detalladas) para configurar Google OA
 ```env
 GOOGLE_CLIENT_ID=123456789-abcdefg.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=GOCSPX-abc123def456
-GOOGLE_CALLBACK_URL=https://api.teccreate.edu/auth/google/callback
-ADMIN_EMAILS=profesor1@instituto.edu,profesor2@instituto.edu
+GOOGLE_CALLBACK_URL=https://api.tecsup.teccreate.edu/auth/google/callback
+ADMIN_EMAILS=coordinador@tecsup.edu.pe,director@tecsup.edu.pe,soporte@tecsup.edu.pe
 ```
 
 #### Fase 6: Probar
@@ -714,8 +717,8 @@ node check-admin.js
 **Output:**
 ```
 === USUARIOS ADMINISTRADORES ===
-1. Juan Pérez (juan.perez@instituto.edu) - admin - Activo
-2. María García (maria.garcia@instituto.edu) - soporte - Activo
+1. Juan Pérez (juan.perez@tecsup.edu.pe) - admin - Activo
+2. María García (maria.garcia@tecsup.edu.pe) - soporte - Activo
 
 Total: 2 administradores
 ```
@@ -770,8 +773,8 @@ node check-usuarios.js --estado=activo
 ```
 === USUARIOS REGISTRADOS ===
 ID  | Nombre              | Email                         | Rol     | Estado
-1   | Juan Pérez          | juan.perez@instituto.edu      | admin   | activo
-2   | María García        | maria.garcia@instituto.edu    | usuario | activo
+1   | Juan Pérez          | juan.perez@tecsup.edu.pe      | admin   | activo
+2   | María García        | maria.garcia@tecsup.edu.pe    | usuario | activo
 ...
 
 Total: 47 usuarios
@@ -1236,15 +1239,15 @@ SESSION_SECRET=genera-un-string-aleatorio-seguro-min-32-caracteres
 JWT_SECRET=otra-clave-aleatoria-diferente-para-firmar-tokens
 JWT_EXPIRES_IN=1d                            # Duración del JWT (1d = 1 día, 7d = 7 días)
 
-# Whitelist de correos institucionales permitidos (separados por coma)
-ADMIN_EMAILS=coordinador@instituto.edu,director@instituto.edu,soporte@instituto.edu
+# Whitelist de correos institucionales Tecsup permitidos (separados por coma)
+ADMIN_EMAILS=coordinador@tecsup.edu.pe,director@tecsup.edu.pe,soporte@tecsup.edu.pe
 
 # ============================================
 # GOOGLE OAUTH 2.0
 # ============================================
 GOOGLE_CLIENT_ID=123456789-abcdefg.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=GOCSPX-abcd1234
-GOOGLE_CALLBACK_URL=https://api.teccreate.edu/auth/google/callback
+GOOGLE_CALLBACK_URL=https://api.tecsup.teccreate.edu/auth/google/callback
 
 # ============================================
 # SERVICIOS DE IA
@@ -1265,7 +1268,7 @@ REDIS_URL=redis://:password@host:6379        # Para almacenar sesiones en Redis
 # ============================================
 # SOPORTE Y MANTENIMIENTO
 # ============================================
-SUPPORT_EMAIL=soporte@teccreate.edu          # Email de contacto de soporte
+SUPPORT_EMAIL=soporte@tecsup.edu.pe          # Email de contacto de soporte Tecsup
 MAINTENANCE_GATE_SECRET=clave-secreta-modo-mantenimiento  # Para activar modo mantenimiento
 
 # ============================================
@@ -1528,8 +1531,8 @@ DELETE FROM imagenes WHERE presentacion_id NOT IN (SELECT id FROM presentaciones
 2. Selecciona **Internal** (si es Google Workspace) o **External**
 3. Completa:
    - **App name**: TecCreate
-   - **User support email**: tu-email@instituto.edu
-   - **Developer contact**: tu-email@instituto.edu
+   - **User support email**: soporte@tecsup.edu.pe
+   - **Developer contact**: soporte@tecsup.edu.pe
 4. **Scopes**: Agrega `userinfo.email` y `userinfo.profile`
 5. Guarda y continúa
 
@@ -1564,10 +1567,10 @@ GOOGLE_CALLBACK_URL=https://api.teccreate.edu/auth/google/callback
 Solo los correos listados en `ADMIN_EMAILS` podrán iniciar sesión:
 
 ```env
-ADMIN_EMAILS=coordinador@instituto.edu,profesor1@instituto.edu,profesor2@instituto.edu,soporte@instituto.edu
+ADMIN_EMAILS=coordinador@tecsup.edu.pe,director@tecsup.edu.pe,soporte@tecsup.edu.pe
 ```
 
-**Nota**: Separa múltiples correos con comas, sin espacios.
+**Nota**: Separa múltiples correos con comas, sin espacios. Todos deben usar el dominio @tecsup.edu.pe.
 
 ### 6. Flujo de Autenticación
 
@@ -1986,8 +1989,8 @@ curl http://localhost:3001/healthz
 FROM node:20-alpine
 
 # Metadata
-LABEL maintainer="tu-email@instituto.edu"
-LABEL description="TecCreate Backend - Generador de presentaciones IA"
+LABEL maintainer="soporte@tecsup.edu.pe"
+LABEL description="TecCreate Backend - Generador de presentaciones IA para Tecsup"
 
 # Crear directorio de trabajo
 WORKDIR /app
@@ -2186,7 +2189,7 @@ JWT_SECRET=<genera-otro-diferente>
 GOOGLE_CLIENT_ID=<tu-client-id>
 GOOGLE_CLIENT_SECRET=<tu-client-secret>
 GOOGLE_CALLBACK_URL=https://tu-app.ondigitalocean.app/auth/google/callback
-ADMIN_EMAILS=correo1@instituto.edu,correo2@instituto.edu
+ADMIN_EMAILS=coordinador@tecsup.edu.pe,director@tecsup.edu.pe,soporte@tecsup.edu.pe
 GROQ_API_KEY=gsk_tu_clave
 GEMINI_API_KEY=AIzaSy_tu_clave
 ```
@@ -2443,7 +2446,7 @@ JWT_SECRET=<auto-generado por Render>
 GOOGLE_CLIENT_ID=<tu-client-id>
 GOOGLE_CLIENT_SECRET=<tu-client-secret>
 GOOGLE_CALLBACK_URL=https://teccreate-backend.onrender.com/auth/google/callback
-ADMIN_EMAILS=correo1@instituto.edu,correo2@instituto.edu
+ADMIN_EMAILS=coordinador@tecsup.edu.pe,director@tecsup.edu.pe,soporte@tecsup.edu.pe
 GROQ_API_KEY=gsk_tu_clave
 GEMINI_API_KEY=AIzaSy_tu_clave
 GEMINI_IMAGE_MODEL=gemini-2.0-flash-preview-image-generation
@@ -3253,7 +3256,7 @@ Authorization: Bearer <token>
       "id": 5,
       "nombre": "Juan",
       "apellido": "Pérez",
-      "email": "juan.perez@instituto.edu",
+      "email": "juan.perez@tecsup.edu.pe",
       "rol": "usuario",
       "estado": "activo",
       "fecha_registro": "2025-09-15T08:00:00.000Z",
@@ -3955,7 +3958,7 @@ PGPOOL_CONNECTION_TIMEOUT=5000
 SESSION_SECRET=<aleatorio>
 JWT_SECRET=<aleatorio>
 JWT_EXPIRES_IN=1d
-ADMIN_EMAILS=correo1@instituto.edu,correo2@instituto.edu
+ADMIN_EMAILS=coordinador@tecsup.edu.pe,director@tecsup.edu.pe,soporte@tecsup.edu.pe
 
 GOOGLE_CLIENT_ID=<client_id>
 GOOGLE_CLIENT_SECRET=<client_secret>
@@ -5238,15 +5241,27 @@ Si encuentras un bug o tienes una sugerencia:
 
 ## 📄 Licencia
 
-Este proyecto está desarrollado para uso educativo en instituciones técnicas. Consulta con el equipo de TecCreate para términos de uso específicos.
+Este proyecto está desarrollado para uso educativo exclusivo de **Tecsup - Instituto de Educación Superior Tecnológica**. 
+
+Propiedad intelectual de TecCreate y Tecsup. Para términos de uso, licenciamiento o implementación en otras instituciones, contactar con:
+- **Email**: soporte@tecsup.edu.pe
+- **Web**: https://tecsup.edu.pe
 
 ---
 
 ## 🎓 Créditos
 
+**Desarrollado para:** Tecsup - Instituto de Educación Superior  
 **Desarrollado por:** Equipo TecCreate  
 **Mantenido por:** JuniorSebastian  
-**Institución:** [Tu Institución Educativa]
+**Institución:** Tecsup (Instituto de Educación Superior Tecnológica)  
+**Ubicación:** Arequipa, Lima, Trujillo (Perú)
+
+**Carreras beneficiadas:**
+- Diseño y Desarrollo de Software
+- Gestión y Mantenimiento de Maquinaria Industrial
+- Mecatrónica Industrial
+- Procesos Químicos y Metalúrgicos
 
 **Tecnologías principales:**
 - Node.js & Express.js
