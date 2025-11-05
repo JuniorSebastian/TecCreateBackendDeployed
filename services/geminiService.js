@@ -246,6 +246,7 @@ const requestImageFromModel = async ({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'User-Agent': 'TecCreate-Backend/1.0 (Node.js)',
       },
       signal: controller?.signal,
       body: JSON.stringify({
