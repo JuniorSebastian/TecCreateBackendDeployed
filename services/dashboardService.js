@@ -105,6 +105,13 @@ const getDashboardSummary = async () => {
   const fechaFinLima = hoyLima.toISODate(); // Fecha de hoy en formato YYYY-MM-DD
   const fechaInicioLima = hoyLima.minus({ days: 13 }).toISODate(); // Hace 13 días
 
+  // 🔍 LOG DE DEBUG: Ver qué fechas está calculando el servidor
+  console.log('🗓️  [Dashboard] Fecha actual del sistema:', new Date().toISOString());
+  console.log('🗓️  [Dashboard] Fecha en Lima (Luxon):', hoyLima.toISO());
+  console.log('🗓️  [Dashboard] fechaFinLima:', fechaFinLima);
+  console.log('🗓️  [Dashboard] fechaInicioLima:', fechaInicioLima);
+  console.log('🗓️  [Dashboard] DASHBOARD_TIMEZONE:', DASHBOARD_TIMEZONE);
+
   const presentacionesTrendQuery = `
     WITH parametros AS (
       SELECT
