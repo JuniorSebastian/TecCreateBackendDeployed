@@ -39,7 +39,11 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const ensureApiKey = () => {
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
-    throw new Error('Falta la variable de entorno GEMINI_API_KEY');
+    throw new Error(
+      'Falta la variable de entorno GEMINI_API_KEY. ' +
+      'En producción debe configurarse en DigitalOcean App Platform (App-Level Environment Variables). ' +
+      'No incluir en .env del repositorio por seguridad.'
+    );
   }
   return key.trim();
 };
