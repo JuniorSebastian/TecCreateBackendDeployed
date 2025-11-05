@@ -100,21 +100,26 @@ const columnExists = async (tableName, columnName) => {
 const getDashboardSummary = async () => {
   const hasUserDateColumn = await columnExists('usuarios', 'fecha_registro');
 
+  // Obtener la fecha actual en la zona horaria de Lima
+  const hoyLima = DateTime.now().setZone(DASHBOARD_TIMEZONE);
+  const fechaFinLima = hoyLima.toISODate(); // Fecha de hoy en formato YYYY-MM-DD
+  const fechaInicioLima = hoyLima.minus({ days: 13 }).toISODate(); // Hace 13 días
+
   const presentacionesTrendQuery = `
     WITH parametros AS (
       SELECT
-        (NOW() AT TIME ZONE $1)::date AS fecha_fin,
-        ((NOW() AT TIME ZONE $1)::date - INTERVAL '13 days')::date AS fecha_inicio
+        $2::date AS fecha_fin,
+        $3::date AS fecha_inicio
     ),
     rango AS (
       SELECT generate_series(parametros.fecha_inicio, parametros.fecha_fin, INTERVAL '1 day')::date AS fecha
       FROM parametros
     ),
     totales AS (
-      SELECT p.fecha_creacion::date AS fecha, COUNT(p.id) AS total
+      SELECT (p.fecha_creacion AT TIME ZONE $1)::date AS fecha, COUNT(p.id) AS total
       FROM presentaciones p
       JOIN parametros ON TRUE
-      WHERE p.fecha_creacion::date BETWEEN parametros.fecha_inicio AND parametros.fecha_fin
+      WHERE (p.fecha_creacion AT TIME ZONE $1)::date BETWEEN parametros.fecha_inicio AND parametros.fecha_fin
       GROUP BY 1
     )
     SELECT rango.fecha, COALESCE(totales.total, 0) AS total
@@ -127,18 +132,18 @@ const getDashboardSummary = async () => {
     ? `
       WITH parametros AS (
         SELECT
-          (NOW() AT TIME ZONE $1)::date AS fecha_fin,
-          ((NOW() AT TIME ZONE $1)::date - INTERVAL '13 days')::date AS fecha_inicio
+          $2::date AS fecha_fin,
+          $3::date AS fecha_inicio
       ),
       rango AS (
         SELECT generate_series(parametros.fecha_inicio, parametros.fecha_fin, INTERVAL '1 day')::date AS fecha
         FROM parametros
       ),
       totales AS (
-        SELECT u.fecha_registro::date AS fecha, COUNT(u.id) AS total
+        SELECT (u.fecha_registro AT TIME ZONE $1)::date AS fecha, COUNT(u.id) AS total
         FROM usuarios u
         JOIN parametros ON TRUE
-        WHERE u.fecha_registro::date BETWEEN parametros.fecha_inicio AND parametros.fecha_fin
+        WHERE (u.fecha_registro AT TIME ZONE $1)::date BETWEEN parametros.fecha_inicio AND parametros.fecha_fin
         GROUP BY 1
       )
       SELECT rango.fecha, COALESCE(totales.total, 0) AS total
@@ -149,8 +154,8 @@ const getDashboardSummary = async () => {
     : `
       WITH parametros AS (
         SELECT
-          (NOW() AT TIME ZONE $1)::date AS fecha_fin,
-          ((NOW() AT TIME ZONE $1)::date - INTERVAL '13 days')::date AS fecha_inicio
+          $2::date AS fecha_fin,
+          $3::date AS fecha_inicio
       )
       SELECT generate_series(parametros.fecha_inicio, parametros.fecha_fin, INTERVAL '1 day')::date AS fecha,
              0 AS total
@@ -214,8 +219,8 @@ const getDashboardSummary = async () => {
       ORDER BY total DESC
       LIMIT 5
     `, [DEFAULT_FONT_KEY]),
-    pool.query(presentacionesTrendQuery, [DASHBOARD_TIMEZONE]),
-    pool.query(usuariosTrendQuery, [DASHBOARD_TIMEZONE]),
+    pool.query(presentacionesTrendQuery, [DASHBOARD_TIMEZONE, fechaFinLima, fechaInicioLima]),
+    pool.query(usuariosTrendQuery, [DASHBOARD_TIMEZONE, fechaFinLima, fechaInicioLima]),
     pool.query(soporteResolvedQuery),
   ]);
 
