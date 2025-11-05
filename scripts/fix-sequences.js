@@ -33,12 +33,17 @@ const SEQUENCES_TO_FIX = [
     idColumn: 'id'
   },
   {
+    table: 'historial_acciones_soporte',
+    sequence: 'historial_acciones_soporte_id_seq',
+    idColumn: 'id'
+  },
+  {
     table: 'usuarios',
     sequence: 'usuarios_id_seq',
     idColumn: 'id'
   },
   {
-    table: 'reportes_soporte', // Cambiado de 'reportes'
+    table: 'reportes_soporte',
     sequence: 'reportes_soporte_id_seq',
     idColumn: 'id'
   },
