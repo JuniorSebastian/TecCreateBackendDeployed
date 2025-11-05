@@ -263,7 +263,7 @@ const requestImageFromModel = async ({
           },
         ],
         generationConfig: {
-          responseModalities: ['TEXT', 'IMAGE'],
+          responseModalities: ['text', 'image'],
           temperature: 0.9,
         },
       }),
