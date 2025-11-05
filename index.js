@@ -1,4 +1,16 @@
 require('dotenv').config();
+
+// 🔍 DEBUG: Verificar API key al iniciar el servidor
+if (process.env.NODE_ENV === 'production') {
+  const maskKey = (key) => {
+    if (!key) return 'NO DEFINIDA';
+    if (key.length < 20) return key.slice(0, 8) + '...';
+    return key.slice(0, 20) + '...' + key.slice(-8);
+  };
+  console.log('🔑 GEMINI_API_KEY en producción:', maskKey(process.env.GEMINI_API_KEY));
+  console.log('   Primeros 20 chars:', process.env.GEMINI_API_KEY?.slice(0, 20) || 'N/A');
+}
+
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
