@@ -14,9 +14,14 @@ const normalizeDateSeries = (rows) => rows.map((row) => {
   let baseDate = null;
 
   if (row.fecha instanceof Date && !Number.isNaN(row.fecha.getTime())) {
-    baseDate = DateTime.fromJSDate(row.fecha, { zone: DASHBOARD_TIMEZONE });
+    // ✅ FIX: Interpretar la fecha como UTC y extraer solo la parte de fecha
+    // No queremos conversión de timezone, solo queremos la fecha literal
+    const isoString = row.fecha.toISOString().split('T')[0]; // '2025-11-04'
+    baseDate = DateTime.fromISO(isoString, { zone: DASHBOARD_TIMEZONE });
   } else if (typeof row.fecha === 'string' && row.fecha.trim()) {
-    baseDate = DateTime.fromISO(row.fecha.trim(), { zone: DASHBOARD_TIMEZONE });
+    // Si ya es string, extraer solo la parte de fecha
+    const dateOnly = row.fecha.trim().split('T')[0];
+    baseDate = DateTime.fromISO(dateOnly, { zone: DASHBOARD_TIMEZONE });
   }
 
   const safeDate = baseDate && baseDate.isValid
