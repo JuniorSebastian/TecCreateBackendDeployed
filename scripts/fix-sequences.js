@@ -22,6 +22,27 @@ const pool = new Pool({
 });
 
 const SEQUENCES_TO_FIX = [
+  // TODAS las tablas con SERIAL PRIMARY KEY
+  {
+    table: 'usuarios',
+    sequence: 'usuarios_id_seq',
+    idColumn: 'id'
+  },
+  {
+    table: 'presentaciones',
+    sequence: 'presentaciones_id_seq',
+    idColumn: 'id'
+  },
+  {
+    table: 'imagenes_presentacion',
+    sequence: 'imagenes_presentacion_id_seq',
+    idColumn: 'id'
+  },
+  {
+    table: 'reportes_soporte',
+    sequence: 'reportes_soporte_id_seq',
+    idColumn: 'id'
+  },
   {
     table: 'comentarios_reporte',
     sequence: 'comentarios_reporte_id_seq',
@@ -33,23 +54,18 @@ const SEQUENCES_TO_FIX = [
     idColumn: 'id'
   },
   {
+    table: 'logs_sistema',
+    sequence: 'logs_sistema_id_seq',
+    idColumn: 'id'
+  },
+  {
     table: 'historial_acciones_soporte',
     sequence: 'historial_acciones_soporte_id_seq',
     idColumn: 'id'
   },
   {
-    table: 'usuarios',
-    sequence: 'usuarios_id_seq',
-    idColumn: 'id'
-  },
-  {
-    table: 'reportes_soporte',
-    sequence: 'reportes_soporte_id_seq',
-    idColumn: 'id'
-  },
-  {
-    table: 'presentaciones',
-    sequence: 'presentaciones_id_seq',
+    table: 'notificaciones_soporte',
+    sequence: 'notificaciones_soporte_id_seq',
     idColumn: 'id'
   }
 ];
@@ -62,10 +78,13 @@ async function fixSequence(table, sequence, idColumn) {
     );
     const maxId = maxResult.rows[0].max_id;
 
+    // Si la tabla está vacía, resetear a 1, sino a MAX + 1
+    const nextVal = maxId === 0 ? 1 : maxId;
+    
     // Resetear la secuencia al MAX + 1
     await pool.query(
-      `SELECT setval('${sequence}', $1, true)`,
-      [maxId]
+      `SELECT setval('${sequence}', $1, ${maxId === 0 ? 'false' : 'true'})`,
+      [nextVal]
     );
 
     console.log(`✅ ${table}: secuencia reseteada a ${maxId + 1} (max actual: ${maxId})`);
