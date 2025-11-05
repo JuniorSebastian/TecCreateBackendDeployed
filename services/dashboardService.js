@@ -245,6 +245,11 @@ const getDashboardSummary = async () => {
   const presentacionesPorDia = normalizeDateSeries(presentacionesTrendResult.rows);
   const usuariosPorDia = normalizeDateSeries(usuariosTrendResult.rows);
 
+  // 🔍 LOG DE DEBUG: Ver qué fechas se están retornando
+  console.log('📊 [Dashboard] Total filas de presentaciones:', presentacionesTrendResult.rows.length);
+  console.log('📊 [Dashboard] Últimas 3 fechas raw:', presentacionesTrendResult.rows.slice(-3));
+  console.log('📊 [Dashboard] Últimas 3 fechas normalizadas:', presentacionesPorDia.slice(-3));
+
   const ticketsResueltosPorAgente = soporteResolvedResult.rows.map((row) => ({
     email: row.soporte_email,
     nombre: row.soporte_nombre || row.soporte_email,
