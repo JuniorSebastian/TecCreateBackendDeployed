@@ -115,14 +115,17 @@ const slugifyForFilename = (value, fallback = 'presentacion') => {
 };
 
 const getPublicBaseUrl = (req) => {
-  const fromEnv = typeof process.env.PUBLIC_BASE_URL === 'string'
-    ? process.env.PUBLIC_BASE_URL.trim()
+  // Primero intentamos usar la URL del backend desde las variables de entorno
+  // BACKEND_URL debe apuntar a DigitalOcean donde están los archivos
+  const backendUrl = typeof process.env.BACKEND_URL === 'string'
+    ? process.env.BACKEND_URL.trim()
     : '';
 
-  if (fromEnv) {
-    return fromEnv.replace(/\/+$/g, '');
+  if (backendUrl) {
+    return backendUrl.replace(/\/+$/g, '');
   }
 
+  // Si no existe BACKEND_URL, construimos desde el request actual (más confiable)
   const host = typeof req.get === 'function' ? req.get('host') : '';
   if (!host) {
     return '';
