@@ -275,145 +275,40 @@ const buildPrompt = (presentacion) => {
 
   const langInstruction = languageInstructions[idioma] || languageInstructions['Español'];
 
-  return `ERES UN EXPERTO CREADOR DE CONTENIDO PROFESIONAL PARA PRESENTACIONES.
+  return `Genera ${slideCount} slides profesionales sobre "${tema}" en ${idioma} (estilo ${writingStyle}, detalle ${detailLevel}).
 
-⚠️ ADVERTENCIA CRÍTICA: Este contenido será validado automáticamente. Si incluyes:
-- Texto repetido ("Profundiza en...: punto N")
-- Numeración dentro de bullets (punto 1, punto 2)
-- Palabras pegadas sin espacios
-- Ortografía incorrecta en nombres propios
-LA RESPUESTA SERÁ RECHAZADA Y TENDRÁS QUE REGENERAR.
+⚠️ VALIDACIÓN AUTOMÁTICA - Rechazado si incluye:
+- "punto 1/2/3/4" o numeración en bullets
+- Texto repetido o palabras pegadas
+- Ortografía incorrecta (ej: "Machu Picchu" NO "Mache Piche")
 
-Genera contenido de ALTA CALIDAD sobre el siguiente tema en formato JSON válido.
+**JSON:**
+{"slides":[{"titulo":"...","bullets":["...","...","..."],"contenido":"Párrafo 1.\\n\\nPárrafo 2."}]}
 
-**TEMA:** ${tema}
-**IDIOMA:** ${idioma}
-**NIVEL DE DETALLE:** ${detailLevel}
-**ESTILO:** ${writingStyle}
+**REGLAS:**
 
-**FORMATO JSON REQUERIDO:**
-{
-  "slides": [
-    {
-      "titulo": "string",
-      "bullets": ["string", "string", "string"],
-      "contenido": "string con párrafos separados por \\n\\n"
-    }
-  ]
-}
+1. CANTIDAD: ${slideCount} slides exactos
 
-**NOTA SOBRE EL CONTENIDO:** El campo "contenido" debe contener 2-3 párrafos bien estructurados,
-separados por doble salto de línea (\\n\\n). Cada párrafo debe desarrollar una idea completa.
+2. ORTOGRAFÍA: ${langInstruction}
+   - Nombres propios correctos: "Machu Picchu" (NO "Mache Piche")
+   - Tildes obligatorias: é, á, í, ó, ú
 
-**INSTRUCCIONES DE CALIDAD (CRÍTICO):**
+3. TÍTULOS: Máx 8 palabras, específicos, sin artículos innecesarios
 
-1. **CANTIDAD:** Genera EXACTAMENTE ${slideCount} diapositivas, ni más ni menos.
+4. BULLETS: ${config.bulletCount} por slide (${config.bulletLength})
+   ❌ PROHIBIDO: "punto N", texto repetido, palabras pegadas
+   ✅ REQUERIDO: Oraciones completas, únicas, con datos específicos
+   Ejemplo: ["Machu Picchu fue construida en el siglo XV.","Se encuentra a 2430 msnm.","Recibe 1.5M visitantes/año."]
 
-2. **ORTOGRAFÍA PERFECTA (MÁXIMA PRIORIDAD):** ${langInstruction}
-   - VERIFICA cada palabra 2 veces antes de incluirla
-   - Nombres propios SIEMPRE con ortografía correcta (ej: "Machu Picchu" NO "Mache Piche")
-   - Lugares turísticos: verifica acentos y mayúsculas (ej: "Cusco" o "Cuzco", NO "Cuco")
-   - Personas famosas: ortografía exacta (ej: "Leonardo da Vinci" NO "Leonardo Da vinchi")
-   - Términos técnicos: usa la forma estándar internacional
-   - Tildes y acentos obligatorios en español (é, á, í, ó, ú)
-   - CERO errores de puntuación
-   - CERO errores de concordancia
-
-3. **TÍTULOS (máximo 8 palabras):**
-   - Claros, específicos y descriptivos
-   - Sin artículos innecesarios al inicio
-   - Primera letra mayúscula, resto en minúscula (excepto nombres propios)
-   - Ejemplo bueno: "Beneficios de la inteligencia artificial"
-   - Ejemplo malo: "La IA es muy buena"
-
-4. **BULLETS (exactamente ${config.bulletCount} por slide, ${config.bulletLength}):**
-   ⚠️ PROHIBIDO ABSOLUTAMENTE:
-   - ❌ NO escribas "punto 1", "punto 2", "punto 3", "punto 4" NUNCA
-   - ❌ NO repitas el mismo texto ("Profundiza en X: ...")
-   - ❌ NO juntes múltiples oraciones sin espacios
-   - ❌ NO uses listas numeradas dentro de bullets
-   
-   ✅ OBLIGATORIO:
-   - CADA BULLET EN UNA LÍNEA SEPARADA en el array JSON
-   - Cada bullet debe ser UNA ORACIÓN COMPLETA e INDEPENDIENTE
-   - Inicia con mayúscula, termina con punto
-   - Contenido ÚNCIO Y DIFERENTE en cada bullet
-   - Usa verbos de acción variados o sustantivos concretos
-   - Incluye datos específicos, cifras o ejemplos tangibles
-   - NO repitas conceptos entre bullets
-   - NO uses frases genéricas como "es importante", "muy útil", "fundamental"
-   - Mantén estructura paralela (todos empiezan similar)
-   - ${style.guidelines}
-   
-   Ejemplo CORRECTO:
-   "bullets": [
-     "Machu Picchu fue construida en el siglo XV por el imperio inca.",
-     "La ciudadela se encuentra a 2430 metros sobre el nivel del mar.",
-     "Recibe más de 1.5 millones de visitantes cada año."
-   ]
-   
-   Ejemplo INCORRECTO (NO hacer):
-   "bullets": [
-     "Profundiza en conclusiones: punto 1. Profundiza en conclusiones: punto 2.",
-     "Machu Picchu es importanteFue construidaAtrae millones de visitantes."
-   ]
-
-5. **CONTENIDO (${config.contentLength} EN PÁRRAFOS SEPARADOS):**
-   - ESTRUCTURA: Genera 2-3 párrafos bien diferenciados, separados por doble salto (\\n\\n)
-   - PÁRRAFO 1: Introducción o contexto general del tema (2-3 oraciones)
-   - PÁRRAFO 2: Desarrollo o detalles principales (3-4 oraciones)
-   - PÁRRAFO 3 (opcional): Conclusión, implicaciones o ejemplos (2-3 oraciones)
-   - Cada párrafo debe ser INDEPENDIENTE pero conectado temáticamente
-   - Desarrolla y profundiza los puntos de los bullets
-   - Incluye contexto, razones, datos específicos o ejemplos concretos
-   - Usa conectores apropiados entre oraciones DENTRO de cada párrafo
+5. CONTENIDO: ${config.paragraphCount} párrafos separados por \\n\\n
+   - P1: Introducción (2-3 oraciones)
+   - P2: Desarrollo con datos (3-4 oraciones)
+   - P3: Conclusión (2-3 oraciones)
    - ${config.focus}
-   - Cada oración debe tener sentido completo
-   - NO escribas todo en un solo bloque, SEPARA por párrafos
-   
-   Ejemplo de formato correcto:
-   "contenido": "Primer párrafo con introducción al tema. Explica el contexto general.\\n\\nSegundo párrafo desarrollando los detalles. Incluye datos específicos y ejemplos concretos.\\n\\nTercer párrafo con conclusiones o implicaciones finales."
 
-6. **ESTILO DE REDACCIÓN:**
-   - Tono: ${style.tone}
-   - ${style.structure}
-   - Evita repeticiones innecesarias
-   - Usa vocabulario preciso y variado
-   - Mantén consistencia en tiempos verbales
+6. ESTILO: ${style.tone} - ${style.structure}
 
-7. **VALIDACIÓN FINAL (CRÍTICO - REVISA 3 VECES):**
-   
-   PASO 1 - Buscar y eliminar:
-   - ❌ "punto 1", "punto 2", "punto 3", "punto 4" → ELIMINAR
-   - ❌ Texto repetido ("Profundiza en...") → REESCRIBIR
-   - ❌ Oraciones pegadas sin espacios → SEPARAR
-   
-   PASO 2 - Verificar ortografía:
-   - ✅ "Machu Picchu" (NO "Mache Picchu", "Mache Piche")
-   - ✅ Nombres propios con ortografía EXACTA
-   - ✅ Tildes correctas en español
-   
-   PASO 3 - Verificar estructura:
-   - ✅ Cada bullet es Único y diferente
-   - ✅ Cada oración tiene espacios entre palabras
-   - ✅ No hay numeración dentro de bullets
-   
-   SI ENCUENTRAS CUALQUIERA DE ESTOS ERRORES, CORRÍGELOS ANTES DE RESPONDER.
-
-**IMPORTANTE:** 
-- Responde ÚNICAMENTE con el JSON válido, sin texto adicional
-- Usa comillas dobles para todas las strings
-- No incluyas comentarios ni explicaciones fuera del JSON
-- Cada slide debe ser informativa y profesional
-- La ortografía es MÁS IMPORTANTE que cualquier otra cosa
-
-**EJEMPLOS DE ORTOGRAFÍA CORRECTA:**
-- "Machu Picchu" (NO "Mache Piche", "Machu Pichu", "Machupicchu")
-- "Cusco" o "Cuzco" (NO "Cuco", "Cusco")  
-- "Perú" (NO "Peru" sin tilde)
-- "México" (NO "Mejico", "Mexico")
-
-Genera ahora el contenido siguiendo TODAS estas instrucciones con máxima calidad y ORTOGRAFÍA PERFECTA.`;
+Responde SOLO con JSON válido. Ortografía correcta: "Machu Picchu" (NO "Mache"), "Perú" (con tilde), "Cusco".`;
 };
 
 const dedupeBullets = (bullets) => {
@@ -788,7 +683,7 @@ async function generarSlidesConGroq(presentacion) {
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.4,
-        max_completion_tokens: 2048,
+        max_completion_tokens: 4096,  // Aumentado para evitar corte de contenido
         top_p: 0.9,
         stream: false,
       });

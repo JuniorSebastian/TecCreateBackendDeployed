@@ -115,21 +115,20 @@ const slugifyForFilename = (value, fallback = 'presentacion') => {
 };
 
 const getPublicBaseUrl = (req) => {
-  // Primero intentamos usar la URL del backend desde las variables de entorno
-  // BACKEND_URL debe apuntar a DigitalOcean donde están los archivos
-  const backendUrl = typeof process.env.BACKEND_URL === 'string'
-    ? process.env.BACKEND_URL.trim()
-    : '';
+  // Preferimos PUBLIC_BASE_URL (documentada en README) porque es la URL
+  // pública del backend donde se sirven los archivos estáticos.
+  // Si no existe, usamos BACKEND_URL como compatibilidad y, finalmente,
+  // construimos desde el request (último recurso).
+  const prefer = (v) => (typeof v === 'string' && v.trim() ? v.trim() : '');
 
-  if (backendUrl) {
-    return backendUrl.replace(/\/+$/g, '');
-  }
+  const publicBase = prefer(process.env.PUBLIC_BASE_URL);
+  if (publicBase) return publicBase.replace(/\/+$/g, '');
 
-  // Si no existe BACKEND_URL, construimos desde el request actual (más confiable)
+  const backendUrl = prefer(process.env.BACKEND_URL);
+  if (backendUrl) return backendUrl.replace(/\/+$/g, '');
+
   const host = typeof req.get === 'function' ? req.get('host') : '';
-  if (!host) {
-    return '';
-  }
+  if (!host) return '';
 
   const protocol = (req.protocol || 'http').replace(/:$/, '');
   return `${protocol}://${host}`;
