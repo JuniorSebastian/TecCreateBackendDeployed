@@ -12,57 +12,38 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const insertSentenceBoundaries = (text) => {
   if (!text || typeof text !== 'string') return '';
 
-  const withBoundaries = text
-    .replace(/([a-záéíóúñ0-9])([A-ZÁÉÍÓÚÑ])/g, '$1. $2')
-    .replace(/([\.\!\?])(\S)/g, '$1 $2')
-    .replace(/:(S)/g, ': $1');
+  // SOLO arreglar espaciado obvio, NO modificar estructura
+  const fixed = text
+    .replace(/([\.\!\?])(\S)/g, '$1 $2')  // Espacio después de puntuación
+    .replace(/\s+/g, ' ')  // Normalizar espacios múltiples
+    .trim();
 
-  const trimmed = withBoundaries.replace(/\s+/g, ' ').trim();
-  if (!trimmed) return '';
-
-  return trimmed;
+  return fixed;
 };
 
 const formatBulletText = (text) => {
   if (!text || typeof text !== 'string') return '';
 
-  // Limpieza profunda de caracteres no deseados y separación de texto pegado
-  let cleanedSource = text
-    .replace(/[\u2022•▪◦●]/g, ' ')
+  // SOLO limpieza ESENCIAL - preservar contenido de Groq lo más posible
+  let cleaned = text
+    // Remover marcadores de bullet al inicio
     .replace(/^[\s\-•\u2022▪◦●*\d]+[\).\-\s]*/g, '')
-    // ELIMINAR patrones prohibidos PRIMERO (antes de cualquier otro proceso)
-    .replace(/Profundiza\s+en\s+[^:]+:\s*punto\s+\d+\.?\s*/gi, '')  // Eliminar "Profundiza en X: punto N"
-    .replace(/\bpunto\s+\d+\.?\s*/gi, '')  // Eliminar cualquier "punto N"
-    .replace(/(\w+)\.\s*\1/gi, '$1')  // Eliminar palabras duplicadas consecutivas
-    // Detectar y separar texto pegado: minúscula/número + mayúscula
-    .replace(/([a-záéíóúñ0-9])([A-ZÁÉÍÓÚÑ])/g, '$1. $2')
+    // SOLO eliminar patrones claramente incorrectos
+    .replace(/Profundiza\s+en\s+[^:]+:\s*punto\s+\d+\.?\s*/gi, '')  
+    .replace(/\bpunto\s+\d+\.?\s*/gi, '')
+    // Normalizar espacios múltiples
     .replace(/\s+/g, ' ')
-    .replace(/[""]/g, '"')  // Normalizar comillas
-    .replace(/['']/g, "'")  // Normalizar apóstrofes
-    .replace(/…/g, '...')   // Normalizar puntos suspensivos
-    .replace(/\s+([.,;:!?])/g, '$1')  // Eliminar espacios antes de puntuación
-    .replace(/([.,;:!?])([^\s])/g, '$1 $2')  // Agregar espacio después de puntuación
-    // Eliminar frases repetidas que empiezan con la misma palabra y dos puntos
-    .replace(/(\w+\s+\w+):\s*[^.]+\.\s*\1:/gi, '$1:')
     .trim();
 
-  if (!cleanedSource || cleanedSource.length < 3) return '';
+  if (!cleaned || cleaned.length < 3) return '';
 
-  // Capitalizar primera letra correctamente
-  const capitalized = cleanedSource.charAt(0).toUpperCase() + cleanedSource.slice(1);
+  // Capitalizar primera letra
+  const capitalized = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   
-  // Asegurar que termina con punto (si no tiene puntuación final)
+  // Asegurar punto final solo si no tiene puntuación
   const withPeriod = /[.!?]$/.test(capitalized) ? capitalized : `${capitalized}.`;
   
-  // Verificar que no tenga doble puntuación
-  const finalText = withPeriod
-    .replace(/\.+$/g, '.')
-    .replace(/\?+$/g, '?')
-    .replace(/!+$/g, '!')
-    // Eliminar múltiples puntos seguidos en medio del texto
-    .replace(/\.{2,}/g, '.');
-  
-  return finalText;
+  return withPeriod;
 };
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -489,22 +470,17 @@ const parseSlides = (rawContent) => {
       const bullets = toBulletArray(slide.bullets || slide.puntos || slide.items || slide.lines);
       const rawContent = slide.contenido || slide.content || slide.descripcion || slide.resumen || '';
       
-      // Limpiar el contenido preservando saltos de línea para párrafos
+      // MÍNIMA limpieza - preservar contenido de Groq
       const cleanContent = typeof rawContent === 'string' 
         ? rawContent
-            .replace(/[""]/g, '"')
-            .replace(/['']/g, "'")
-            .replace(/…/g, '...')
-            // Preservar dobles saltos de línea (\\n\\n) para separar párrafos
+            // Solo convertir escape sequences literales
             .replace(/\\n\\n/g, '\n\n')
-            .replace(/\\n/g, ' ')  // Convertir \n simples en espacios
-            // Normalizar espacios DENTRO de párrafos (no entre ellos)
+            .replace(/\\n/g, ' ')
+            // Normalizar espacios SOLO dentro de párrafos
             .split('\n\n')
             .map(para => para.replace(/\s+/g, ' ').trim())
             .filter(Boolean)
             .join('\n\n')
-            .replace(/\s+([.,;:!?])/g, '$1')
-            .replace(/([.,;:!?])([^\s])/g, '$1 $2')
             .trim()
         : '';
 

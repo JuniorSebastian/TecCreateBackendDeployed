@@ -266,17 +266,12 @@ const stripLeadingBullet = (text) => {
 const insertSentenceBoundaries = (text) => {
   if (!text || typeof text !== 'string') return '';
 
+  // SOLO arreglar espaciado básico - NO agregar puntos ni modificar estructura
   const withBoundaries = text
-    // Separar cuando minúscula/número + mayúscula (ej: "ideasMachu" -> "ideas. Machu")
-    .replace(/([a-záéíóúñ0-9])([A-ZÁÉÍÓÚÑ])/g, '$1. $2')
-    // Separar puntuación + letra sin espacio (ej: "fin.Empieza" -> "fin. Empieza")
+    // Separar puntuación + letra sin espacio
     .replace(/([.!?])([^\s])/g, '$1 $2')
-    // Separar dos puntos + letra sin espacio (ej: "título:Contenido" -> "título: Contenido")
-    .replace(/:(\S)/g, ': $1')
-    // Detectar palabras pegadas: vocal + consonante + mayúscula (ej: "visitantesCada" -> "visitantes. Cada")
-    .replace(/([aeiouáéíóú])([bcdfghjklmnñpqrstvwxyz]{1,3})([A-ZÁÉÍÓÚÑ])/g, '$1$2. $3')
-    // Separar cuando hay punto + minúscula (texto mal formado)
-    .replace(/\.([a-záéíóúñ])/g, '. $1');
+    // Separar dos puntos + letra sin espacio
+    .replace(/:(\S)/g, ': $1');
 
   return withBoundaries.replace(/\s+/g, ' ').trim();
 };
@@ -481,9 +476,9 @@ const prepareContentParagraphs = (value) => {
     return [];
   }
 
+  // PRESERVAR contenido lo más posible - SOLO normalizar saltos de línea
   const normalized = value
     .replace(/\r\n/g, '\n')
-    .replace(/[\u2022•▪◦●\-\*]+\s*/g, '') // Removido bullets
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
@@ -493,9 +488,7 @@ const prepareContentParagraphs = (value) => {
 
   return normalized
     .split(/\n{2,}/)
-    .map((paragraph) => insertSentenceBoundaries(paragraph)
-      .replace(/\s+/g, ' ')
-      .trim())
+    .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
     .filter(Boolean);
 };
 
