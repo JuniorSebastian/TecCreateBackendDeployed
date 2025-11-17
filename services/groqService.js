@@ -30,18 +30,20 @@ const formatBulletText = (text) => {
   let cleanedSource = text
     .replace(/[\u2022•▪◦●]/g, ' ')
     .replace(/^[\s\-•\u2022▪◦●*\d]+[\).\-\s]*/g, '')
+    // ELIMINAR patrones prohibidos PRIMERO (antes de cualquier otro proceso)
+    .replace(/Profundiza\s+en\s+[^:]+:\s*punto\s+\d+\.?\s*/gi, '')  // Eliminar "Profundiza en X: punto N"
+    .replace(/\bpunto\s+\d+\.?\s*/gi, '')  // Eliminar cualquier "punto N"
+    .replace(/(\w+)\.\s*\1/gi, '$1')  // Eliminar palabras duplicadas consecutivas
     // Detectar y separar texto pegado: minúscula/número + mayúscula
     .replace(/([a-záéíóúñ0-9])([A-ZÁÉÍÓÚÑ])/g, '$1. $2')
-    // Detectar repetición de frases (ej: "Profundiza en X: punto 1.Profundiza en X: punto 2")
-    .replace(/([.:;])\s*Profundiza\s+en\s+[^:]+:\s*punto\s+\d+/gi, '$1')
-    // Limpiar patrones de "punto N" mal formateados
-    .replace(/[.:;]?\s*punto\s+\d+\.?/gi, '')
     .replace(/\s+/g, ' ')
     .replace(/[""]/g, '"')  // Normalizar comillas
     .replace(/['']/g, "'")  // Normalizar apóstrofes
     .replace(/…/g, '...')   // Normalizar puntos suspensivos
     .replace(/\s+([.,;:!?])/g, '$1')  // Eliminar espacios antes de puntuación
     .replace(/([.,;:!?])([^\s])/g, '$1 $2')  // Agregar espacio después de puntuación
+    // Eliminar frases repetidas que empiezan con la misma palabra y dos puntos
+    .replace(/(\w+\s+\w+):\s*[^.]+\.\s*\1:/gi, '$1:')
     .trim();
 
   if (!cleanedSource || cleanedSource.length < 3) return '';
@@ -273,7 +275,16 @@ const buildPrompt = (presentacion) => {
 
   const langInstruction = languageInstructions[idioma] || languageInstructions['Español'];
 
-  return `Eres un experto creador de contenido profesional para presentaciones. Genera contenido de ALTA CALIDAD sobre el siguiente tema en formato JSON válido.
+  return `ERES UN EXPERTO CREADOR DE CONTENIDO PROFESIONAL PARA PRESENTACIONES.
+
+⚠️ ADVERTENCIA CRÍTICA: Este contenido será validado automáticamente. Si incluyes:
+- Texto repetido ("Profundiza en...: punto N")
+- Numeración dentro de bullets (punto 1, punto 2)
+- Palabras pegadas sin espacios
+- Ortografía incorrecta en nombres propios
+LA RESPUESTA SERÁ RECHAZADA Y TENDRÁS QUE REGENERAR.
+
+Genera contenido de ALTA CALIDAD sobre el siguiente tema en formato JSON válido.
 
 **TEMA:** ${tema}
 **IDIOMA:** ${idioma}
@@ -316,13 +327,17 @@ separados por doble salto de línea (\\n\\n). Cada párrafo debe desarrollar una
    - Ejemplo malo: "La IA es muy buena"
 
 4. **BULLETS (exactamente ${config.bulletCount} por slide, ${config.bulletLength}):**
+   ⚠️ PROHIBIDO ABSOLUTAMENTE:
+   - ❌ NO escribas "punto 1", "punto 2", "punto 3", "punto 4" NUNCA
+   - ❌ NO repitas el mismo texto ("Profundiza en X: ...")
+   - ❌ NO juntes múltiples oraciones sin espacios
+   - ❌ NO uses listas numeradas dentro de bullets
+   
+   ✅ OBLIGATORIO:
    - CADA BULLET EN UNA LÍNEA SEPARADA en el array JSON
    - Cada bullet debe ser UNA ORACIÓN COMPLETA e INDEPENDIENTE
    - Inicia con mayúscula, termina con punto
-   - NO juntes múltiples ideas en un solo bullet
-   - NO repitas el mismo texto varias veces en un bullet
-   - NO uses numeración (punto 1, punto 2, etc.) dentro de los bullets
-   - NO incluyas listas numeradas dentro de un bullet
+   - Contenido ÚNCIO Y DIFERENTE en cada bullet
    - Usa verbos de acción variados o sustantivos concretos
    - Incluye datos específicos, cifras o ejemplos tangibles
    - NO repitas conceptos entre bullets
@@ -366,17 +381,24 @@ separados por doble salto de línea (\\n\\n). Cada párrafo debe desarrollar una
    - Usa vocabulario preciso y variado
    - Mantén consistencia en tiempos verbales
 
-7. **VALIDACIÓN FINAL (CRÍTICO):**
-   - Lee cada texto completo antes de incluirlo
-   - VERIFICA ORTOGRAFÍA de nombres propios, lugares y términos técnicos
-   - VERIFICA ESPACIOS: cada oración debe tener espacios entre palabras
-   - NO pegues oraciones sin puntos ni espacios (ej: "idea1Fue construidaEs famoso")
-   - Confirma que cada bullet está separado correctamente en el array
-   - Verifica que cada bullet agregue valor real y sea ÚNCO (no repetido)
-   - Asegura que el contenido fluye naturalmente
-   - NO uses numeración dentro de bullets (punto 1, punto 2, etc.)
-   - DOUBLE-CHECK: ortografía y gramática perfectas
-   - Si el tema contiene nombres (lugares, personas, marcas): búscalos en tu conocimiento y usa la ortografía EXACTA
+7. **VALIDACIÓN FINAL (CRÍTICO - REVISA 3 VECES):**
+   
+   PASO 1 - Buscar y eliminar:
+   - ❌ "punto 1", "punto 2", "punto 3", "punto 4" → ELIMINAR
+   - ❌ Texto repetido ("Profundiza en...") → REESCRIBIR
+   - ❌ Oraciones pegadas sin espacios → SEPARAR
+   
+   PASO 2 - Verificar ortografía:
+   - ✅ "Machu Picchu" (NO "Mache Picchu", "Mache Piche")
+   - ✅ Nombres propios con ortografía EXACTA
+   - ✅ Tildes correctas en español
+   
+   PASO 3 - Verificar estructura:
+   - ✅ Cada bullet es Único y diferente
+   - ✅ Cada oración tiene espacios entre palabras
+   - ✅ No hay numeración dentro de bullets
+   
+   SI ENCUENTRAS CUALQUIERA DE ESTOS ERRORES, CORRÍGELOS ANTES DE RESPONDER.
 
 **IMPORTANTE:** 
 - Responde ÚNICAMENTE con el JSON válido, sin texto adicional
@@ -520,6 +542,43 @@ const parseSlides = (rawContent) => {
     structureError.rawResponse = cleaned.slice(0, MAX_LOG_LENGTH);
     throw structureError;
   }
+
+  // Validar que no contenga patrones prohibidos
+  const validateSlideQuality = (slide) => {
+    const errors = [];
+    
+    // Validar bullets
+    const bulletsArray = slide.bullets || slide.puntos || slide.items || [];
+    if (Array.isArray(bulletsArray)) {
+      bulletsArray.forEach((bullet, idx) => {
+        const bulletStr = String(bullet || '').toLowerCase();
+        // Detectar "punto N"
+        if (/punto\s+\d+/i.test(bulletStr)) {
+          errors.push(`Bullet ${idx + 1} contiene "punto N" (prohibido)`);
+        }
+        // Detectar repetición de "Profundiza en"
+        if ((bulletStr.match(/profundiza\s+en/gi) || []).length > 1) {
+          errors.push(`Bullet ${idx + 1} repite "Profundiza en" múltiples veces`);
+        }
+        // Detectar texto pegado sin espacios (más de 60 chars sin espacio)
+        if (/[a-záéíóúñ]{60,}/i.test(bulletStr)) {
+          errors.push(`Bullet ${idx + 1} tiene texto pegado sin espacios`);
+        }
+      });
+    }
+    
+    return errors;
+  };
+
+  // Validar todos los slides
+  parsed.slides.forEach((slide, index) => {
+    const errors = validateSlideQuality(slide);
+    if (errors.length > 0) {
+      const validationError = new Error(`Slide ${index + 1} falló validación de calidad:\n${errors.join('\n')}`);
+      validationError.rawResponse = cleaned.slice(0, MAX_LOG_LENGTH);
+      throw validationError;
+    }
+  });
 
   const slides = parsed.slides
     .map((slide, index) => {
