@@ -26,10 +26,16 @@ const insertSentenceBoundaries = (text) => {
 const formatBulletText = (text) => {
   if (!text || typeof text !== 'string') return '';
 
-  // Limpieza profunda de caracteres no deseados
-  const cleanedSource = text
+  // Limpieza profunda de caracteres no deseados y separación de texto pegado
+  let cleanedSource = text
     .replace(/[\u2022•▪◦●]/g, ' ')
     .replace(/^[\s\-•\u2022▪◦●*\d]+[\).\-\s]*/g, '')
+    // Detectar y separar texto pegado: minúscula/número + mayúscula
+    .replace(/([a-záéíóúñ0-9])([A-ZÁÉÍÓÚÑ])/g, '$1. $2')
+    // Detectar repetición de frases (ej: "Profundiza en X: punto 1.Profundiza en X: punto 2")
+    .replace(/([.:;])\s*Profundiza\s+en\s+[^:]+:\s*punto\s+\d+/gi, '$1')
+    // Limpiar patrones de "punto N" mal formateados
+    .replace(/[.:;]?\s*punto\s+\d+\.?/gi, '')
     .replace(/\s+/g, ' ')
     .replace(/[""]/g, '"')  // Normalizar comillas
     .replace(/['']/g, "'")  // Normalizar apóstrofes
@@ -47,7 +53,12 @@ const formatBulletText = (text) => {
   const withPeriod = /[.!?]$/.test(capitalized) ? capitalized : `${capitalized}.`;
   
   // Verificar que no tenga doble puntuación
-  const finalText = withPeriod.replace(/\.+$/g, '.').replace(/\?+$/g, '?').replace(/!+$/g, '!');
+  const finalText = withPeriod
+    .replace(/\.+$/g, '.')
+    .replace(/\?+$/g, '?')
+    .replace(/!+$/g, '!')
+    // Eliminar múltiples puntos seguidos en medio del texto
+    .replace(/\.{2,}/g, '.');
   
   return finalText;
 };
@@ -309,18 +320,28 @@ separados por doble salto de línea (\\n\\n). Cada párrafo debe desarrollar una
    - Cada bullet debe ser UNA ORACIÓN COMPLETA e INDEPENDIENTE
    - Inicia con mayúscula, termina con punto
    - NO juntes múltiples ideas en un solo bullet
+   - NO repitas el mismo texto varias veces en un bullet
+   - NO uses numeración (punto 1, punto 2, etc.) dentro de los bullets
+   - NO incluyas listas numeradas dentro de un bullet
    - Usa verbos de acción variados o sustantivos concretos
    - Incluye datos específicos, cifras o ejemplos tangibles
    - NO repitas conceptos entre bullets
    - NO uses frases genéricas como "es importante", "muy útil", "fundamental"
    - Mantén estructura paralela (todos empiezan similar)
    - ${style.guidelines}
-   - Ejemplo de formato JSON correcto:
-     "bullets": [
-       "Primera idea completa con datos específicos.",
-       "Segunda idea diferente y valiosa.",
-       "Tercera idea con ejemplo concreto."
-     ]
+   
+   Ejemplo CORRECTO:
+   "bullets": [
+     "Machu Picchu fue construida en el siglo XV por el imperio inca.",
+     "La ciudadela se encuentra a 2430 metros sobre el nivel del mar.",
+     "Recibe más de 1.5 millones de visitantes cada año."
+   ]
+   
+   Ejemplo INCORRECTO (NO hacer):
+   "bullets": [
+     "Profundiza en conclusiones: punto 1. Profundiza en conclusiones: punto 2.",
+     "Machu Picchu es importanteFue construidaAtrae millones de visitantes."
+   ]
 
 5. **CONTENIDO (${config.contentLength} EN PÁRRAFOS SEPARADOS):**
    - ESTRUCTURA: Genera 2-3 párrafos bien diferenciados, separados por doble salto (\\n\\n)
@@ -348,9 +369,12 @@ separados por doble salto de línea (\\n\\n). Cada párrafo debe desarrollar una
 7. **VALIDACIÓN FINAL (CRÍTICO):**
    - Lee cada texto completo antes de incluirlo
    - VERIFICA ORTOGRAFÍA de nombres propios, lugares y términos técnicos
+   - VERIFICA ESPACIOS: cada oración debe tener espacios entre palabras
+   - NO pegues oraciones sin puntos ni espacios (ej: "idea1Fue construidaEs famoso")
    - Confirma que cada bullet está separado correctamente en el array
-   - Verifica que cada bullet agregue valor real
+   - Verifica que cada bullet agregue valor real y sea ÚNCO (no repetido)
    - Asegura que el contenido fluye naturalmente
+   - NO uses numeración dentro de bullets (punto 1, punto 2, etc.)
    - DOUBLE-CHECK: ortografía y gramática perfectas
    - Si el tema contiene nombres (lugares, personas, marcas): búscalos en tu conocimiento y usa la ortografía EXACTA
 
