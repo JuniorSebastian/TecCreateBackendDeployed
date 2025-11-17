@@ -281,11 +281,15 @@ const buildPrompt = (presentacion) => {
 
 1. **CANTIDAD:** Genera EXACTAMENTE ${slideCount} diapositivas, ni más ni menos.
 
-2. **IDIOMA Y GRAMÁTICA:** ${langInstruction}
-   - CERO errores ortográficos
+2. **ORTOGRAFÍA PERFECTA (MÁXIMA PRIORIDAD):** ${langInstruction}
+   - VERIFICA cada palabra 2 veces antes de incluirla
+   - Nombres propios SIEMPRE con ortografía correcta (ej: "Machu Picchu" NO "Mache Piche")
+   - Lugares turísticos: verifica acentos y mayúsculas (ej: "Cusco" o "Cuzco", NO "Cuco")
+   - Personas famosas: ortografía exacta (ej: "Leonardo da Vinci" NO "Leonardo Da vinchi")
+   - Términos técnicos: usa la forma estándar internacional
+   - Tildes y acentos obligatorios en español (é, á, í, ó, ú)
    - CERO errores de puntuación
    - CERO errores de concordancia
-   - Verifica cada palabra antes de incluirla
 
 3. **TÍTULOS (máximo 8 palabras):**
    - Claros, específicos y descriptivos
@@ -295,13 +299,22 @@ const buildPrompt = (presentacion) => {
    - Ejemplo malo: "La IA es muy buena"
 
 4. **BULLETS (exactamente ${config.bulletCount} por slide, ${config.bulletLength}):**
-   - Cada bullet debe aportar información ÚNICA y VALIOSA
-   - Inicia con verbos de acción variados o sustantivos concretos
+   - CADA BULLET EN UNA LÍNEA SEPARADA en el array JSON
+   - Cada bullet debe ser UNA ORACIÓN COMPLETA e INDEPENDIENTE
+   - Inicia con mayúscula, termina con punto
+   - NO juntes múltiples ideas en un solo bullet
+   - Usa verbos de acción variados o sustantivos concretos
    - Incluye datos específicos, cifras o ejemplos tangibles
    - NO repitas conceptos entre bullets
    - NO uses frases genéricas como "es importante", "muy útil", "fundamental"
    - Mantén estructura paralela (todos empiezan similar)
    - ${style.guidelines}
+   - Ejemplo de formato JSON correcto:
+     "bullets": [
+       "Primera idea completa con datos específicos.",
+       "Segunda idea diferente y valiosa.",
+       "Tercera idea con ejemplo concreto."
+     ]
 
 5. **CONTENIDO (${config.contentLength}):**
    - Desarrolla y profundiza los puntos de los bullets
@@ -318,19 +331,29 @@ const buildPrompt = (presentacion) => {
    - Usa vocabulario preciso y variado
    - Mantén consistencia en tiempos verbales
 
-7. **VALIDACIÓN FINAL:**
+7. **VALIDACIÓN FINAL (CRÍTICO):**
    - Lee cada texto completo antes de incluirlo
+   - VERIFICA ORTOGRAFÍA de nombres propios, lugares y términos técnicos
+   - Confirma que cada bullet está separado correctamente en el array
    - Verifica que cada bullet agregue valor real
    - Asegura que el contenido fluye naturalmente
-   - Confirma ortografía y gramática perfectas
+   - DOUBLE-CHECK: ortografía y gramática perfectas
+   - Si el tema contiene nombres (lugares, personas, marcas): búscalos en tu conocimiento y usa la ortografía EXACTA
 
 **IMPORTANTE:** 
 - Responde ÚNICAMENTE con el JSON válido, sin texto adicional
 - Usa comillas dobles para todas las strings
 - No incluyas comentarios ni explicaciones fuera del JSON
 - Cada slide debe ser informativa y profesional
+- La ortografía es MÁS IMPORTANTE que cualquier otra cosa
 
-Genera ahora el contenido siguiendo TODAS estas instrucciones con máxima calidad.`;
+**EJEMPLOS DE ORTOGRAFÍA CORRECTA:**
+- "Machu Picchu" (NO "Mache Piche", "Machu Pichu", "Machupicchu")
+- "Cusco" o "Cuzco" (NO "Cuco", "Cusco")  
+- "Perú" (NO "Peru" sin tilde)
+- "México" (NO "Mejico", "Mexico")
+
+Genera ahora el contenido siguiendo TODAS estas instrucciones con máxima calidad y ORTOGRAFÍA PERFECTA.`;
 };
 
 const dedupeBullets = (bullets) => {
