@@ -24,14 +24,20 @@ const insertSentenceBoundaries = (text) => {
 const formatBulletText = (text) => {
   if (!text || typeof text !== 'string') return '';
 
-  // SOLO limpieza ESENCIAL - preservar contenido de Groq lo más posible
+  // LIMPIEZA ESENCIAL + corrección ortográfica común
   let cleaned = text
     // Remover marcadores de bullet al inicio
     .replace(/^[\s\-•\u2022▪◦●*\d]+[\).\-\s]*/g, '')
-    // SOLO eliminar patrones claramente incorrectos
+    // ELIMINAR patrones prohibidos
     .replace(/Profundiza\s+en\s+[^:]+:\s*punto\s+\d+\.?\s*/gi, '')  
     .replace(/\bpunto\s+\d+\.?\s*/gi, '')
-    // Normalizar espacios múltiples
+    // CORREGIR errores ortográficos comunes
+    .replace(/\bmache\b/gi, 'Machu')
+    .replace(/\bpiche\b/gi, 'Picchu')
+    .replace(/\bmejico\b/gi, 'México')
+    .replace(/\bperu\b/gi, 'Perú')
+    .replace(/\bcuco\b/gi, 'Cusco')
+    // Normalizar espacios
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -40,8 +46,14 @@ const formatBulletText = (text) => {
   // Capitalizar primera letra
   const capitalized = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   
-  // Asegurar punto final solo si no tiene puntuación
+  // Asegurar punto final
   const withPeriod = /[.!?]$/.test(capitalized) ? capitalized : `${capitalized}.`;
+  
+  // Truncar bullets muy largos (máximo 20 palabras)
+  const words = withPeriod.split(/\s+/);
+  if (words.length > 20) {
+    return words.slice(0, 20).join(' ') + '...';
+  }
   
   return withPeriod;
 };
@@ -200,28 +212,28 @@ const buildPrompt = (presentacion) => {
   const rawStyle = presentacion.estilo || presentacion.style || 'Professional';
   const writingStyle = styleMapping[rawStyle] || rawStyle;
 
-  // Configuración basada en nivel de detalle
+  // Configuración basada en nivel de detalle - OPTIMIZADA para no sobresalir
   const detailConfig = {
     Brief: {
       bulletCount: 3,
-      bulletLength: 'entre 10-15 palabras',
-      contentLength: '2 párrafos: uno de introducción (2 oraciones) y uno de desarrollo (2-3 oraciones)',
+      bulletLength: 'MÁXIMO 12 palabras',
+      contentLength: '2 párrafos BREVES (máx 80 palabras total)',
       paragraphCount: 2,
-      focus: 'información esencial y directa, sin detalles superfluos',
+      focus: 'información esencial, directa, sin detalles superfluos',
     },
     Medium: {
       bulletCount: 4,
-      bulletLength: 'entre 12-18 palabras',
-      contentLength: '2-3 párrafos: introducción (2-3 oraciones), desarrollo (3-4 oraciones) y opcional conclusión (2 oraciones)',
+      bulletLength: 'MÁXIMO 15 palabras',
+      contentLength: '2-3 párrafos CONCISOS (máx 120 palabras total)',
       paragraphCount: 3,
-      focus: 'balance entre detalle y claridad, con ejemplos concretos',
+      focus: 'balance entre detalle y claridad con ejemplos concretos',
     },
     Detailed: {
       bulletCount: 5,
-      bulletLength: 'entre 15-22 palabras',
-      contentLength: '3 párrafos completos: contexto (3 oraciones), análisis detallado (4-5 oraciones) y conclusiones (2-3 oraciones)',
+      bulletLength: 'MÁXIMO 18 palabras',
+      contentLength: '3 párrafos (máx 150 palabras total)',
       paragraphCount: 3,
-      focus: 'análisis profundo con datos, estadísticas y ejemplos específicos múltiples',
+      focus: 'análisis con datos, estadísticas y ejemplos específicos',
     },
   };
 
@@ -270,21 +282,22 @@ const buildPrompt = (presentacion) => {
 
 1. CANTIDAD: ${slideCount} slides exactos
 
-2. ORTOGRAFÍA: ${langInstruction}
-   - Nombres propios correctos: "Machu Picchu" (NO "Mache Piche")
-   - Tildes obligatorias: é, á, í, ó, ú
+2. ORTOGRAFÍA PERFECTA (CRÍTICO): ${langInstruction}
+   ⚠️ VERIFICA 2 VECES cada nombre propio ANTES de escribir
+   ✅ "Machu Picchu" "Cusco" "Perú" "México" "París" "Tokio"
+   ❌ "Mache" "Piche" "Cuco" "Peru" "Mejico" "Paris"
+   - Tildes SIEMPRE en español: é, á, í, ó, ú
 
-3. TÍTULOS: Máx 8 palabras, específicos, sin artículos innecesarios
+3. TÍTULOS: Máx 8 palabras, ortografía PERFECTA, específicos
 
-4. BULLETS: ${config.bulletCount} por slide (${config.bulletLength})
-   ❌ PROHIBIDO: "punto N", texto repetido, palabras pegadas
-   ✅ REQUERIDO: Oraciones completas, únicas, con datos específicos
+4. BULLETS: ${config.bulletCount} por slide - MÁXIMO 15 palabras cada uno
+   ❌ PROHIBIDO: "punto N", texto repetido, palabras pegadas, bullets muy largos
+   ✅ REQUERIDO: Oraciones CONCISAS, únicas, con datos específicos
    Ejemplo: ["Machu Picchu fue construida en el siglo XV.","Se encuentra a 2430 msnm.","Recibe 1.5M visitantes/año."]
 
-5. CONTENIDO: ${config.paragraphCount} párrafos separados por \\n\\n
-   - P1: Introducción (2-3 oraciones)
-   - P2: Desarrollo con datos (3-4 oraciones)
-   - P3: Conclusión (2-3 oraciones)
+5. CONTENIDO: ${config.paragraphCount} párrafos CONCISOS separados por \\n\\n
+   - Cada párrafo: 2-3 oraciones BREVES
+   - Total: máximo 150 palabras para todo el contenido
    - ${config.focus}
 
 6. ESTILO: ${style.tone} - ${style.structure}
@@ -423,24 +436,52 @@ const parseSlides = (rawContent) => {
   const validateSlideQuality = (slide) => {
     const errors = [];
     
+    // Validar título
+    const titleStr = String(slide.titulo || slide.title || '');
+    if (titleStr.length > 100) {
+      errors.push('Título muy largo (máx 100 caracteres)');
+    }
+    
     // Validar bullets
     const bulletsArray = slide.bullets || slide.puntos || slide.items || [];
     if (Array.isArray(bulletsArray)) {
       bulletsArray.forEach((bullet, idx) => {
-        const bulletStr = String(bullet || '').toLowerCase();
-        // Detectar "punto N"
+        const bulletStr = String(bullet || '');
+        const bulletLower = bulletStr.toLowerCase();
+        
+        // Detectar "punto N" (PROHIBIDO)
         if (/punto\s+\d+/i.test(bulletStr)) {
-          errors.push(`Bullet ${idx + 1} contiene "punto N" (prohibido)`);
+          errors.push(`Bullet ${idx + 1} contiene "punto N" (PROHIBIDO)`);
         }
+        
         // Detectar repetición de "Profundiza en"
-        if ((bulletStr.match(/profundiza\s+en/gi) || []).length > 1) {
-          errors.push(`Bullet ${idx + 1} repite "Profundiza en" múltiples veces`);
+        if ((bulletLower.match(/profundiza\s+en/gi) || []).length > 1) {
+          errors.push(`Bullet ${idx + 1} repite "Profundiza en"`);
         }
-        // Detectar texto pegado sin espacios (más de 60 chars sin espacio)
-        if (/[a-záéíóúñ]{60,}/i.test(bulletStr)) {
-          errors.push(`Bullet ${idx + 1} tiene texto pegado sin espacios`);
+        
+        // Detectar texto pegado (40+ chars sin espacios)
+        if (/[a-záéíóúñ]{40,}/i.test(bulletStr)) {
+          errors.push(`Bullet ${idx + 1} tiene palabras pegadas`);
+        }
+        
+        // Bullet muy largo (más de 25 palabras)
+        const wordCount = bulletStr.trim().split(/\s+/).length;
+        if (wordCount > 25) {
+          errors.push(`Bullet ${idx + 1} muy largo (${wordCount} palabras, máx 25)`);
+        }
+        
+        // Detectar ortografía común incorrecta
+        if (/mache|piche/i.test(bulletStr)) {
+          errors.push(`Bullet ${idx + 1} tiene error ortográfico (ej: "Mache" debe ser "Machu")`);
         }
       });
+    }
+    
+    // Validar contenido
+    const contentStr = String(slide.contenido || slide.content || '');
+    const contentWords = contentStr.trim().split(/\s+/).length;
+    if (contentWords > 180) {
+      errors.push(`Contenido muy largo (${contentWords} palabras, máx 180)`);
     }
     
     return errors;

@@ -912,6 +912,7 @@ async function crearPresentacionPptx(presentacion) {
       align: 'left',
       valign: 'top',
       margin: 0.12,
+      shrinkText: true,  // Ajuste automático para que nunca sobresalga
     });
 
   addPanelLabel(pptx, slide, 'Imagen referencial', IMAGE_AREA, theme, fonts);
