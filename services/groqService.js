@@ -211,20 +211,23 @@ const buildPrompt = (presentacion) => {
     Brief: {
       bulletCount: 3,
       bulletLength: 'entre 10-15 palabras',
-      contentLength: 'un párrafo de 2-3 oraciones bien estructuradas',
-      focus: 'información esencial y directa',
+      contentLength: '2 párrafos: uno de introducción (2 oraciones) y uno de desarrollo (2-3 oraciones)',
+      paragraphCount: 2,
+      focus: 'información esencial y directa, sin detalles superfluos',
     },
     Medium: {
       bulletCount: 4,
       bulletLength: 'entre 12-18 palabras',
-      contentLength: 'un párrafo de 3-4 oraciones coherentes',
-      focus: 'balance entre detalle y claridad',
+      contentLength: '2-3 párrafos: introducción (2-3 oraciones), desarrollo (3-4 oraciones) y opcional conclusión (2 oraciones)',
+      paragraphCount: 3,
+      focus: 'balance entre detalle y claridad, con ejemplos concretos',
     },
     Detailed: {
       bulletCount: 5,
       bulletLength: 'entre 15-22 palabras',
-      contentLength: 'un párrafo de 4-5 oraciones completas',
-      focus: 'análisis profundo con ejemplos específicos',
+      contentLength: '3 párrafos completos: contexto (3 oraciones), análisis detallado (4-5 oraciones) y conclusiones (2-3 oraciones)',
+      paragraphCount: 3,
+      focus: 'análisis profundo con datos, estadísticas y ejemplos específicos múltiples',
     },
   };
 
@@ -272,10 +275,13 @@ const buildPrompt = (presentacion) => {
     {
       "titulo": "string",
       "bullets": ["string", "string", "string"],
-      "contenido": "string"
+      "contenido": "string con párrafos separados por \\n\\n"
     }
   ]
 }
+
+**NOTA SOBRE EL CONTENIDO:** El campo "contenido" debe contener 2-3 párrafos bien estructurados,
+separados por doble salto de línea (\\n\\n). Cada párrafo debe desarrollar una idea completa.
 
 **INSTRUCCIONES DE CALIDAD (CRÍTICO):**
 
@@ -316,13 +322,21 @@ const buildPrompt = (presentacion) => {
        "Tercera idea con ejemplo concreto."
      ]
 
-5. **CONTENIDO (${config.contentLength}):**
+5. **CONTENIDO (${config.contentLength} EN PÁRRAFOS SEPARADOS):**
+   - ESTRUCTURA: Genera 2-3 párrafos bien diferenciados, separados por doble salto (\\n\\n)
+   - PÁRRAFO 1: Introducción o contexto general del tema (2-3 oraciones)
+   - PÁRRAFO 2: Desarrollo o detalles principales (3-4 oraciones)
+   - PÁRRAFO 3 (opcional): Conclusión, implicaciones o ejemplos (2-3 oraciones)
+   - Cada párrafo debe ser INDEPENDIENTE pero conectado temáticamente
    - Desarrolla y profundiza los puntos de los bullets
-   - Conecta las ideas con fluidez y coherencia
-   - Incluye contexto, razones o ejemplos concretos
-   - Usa conectores apropiados entre oraciones
+   - Incluye contexto, razones, datos específicos o ejemplos concretos
+   - Usa conectores apropiados entre oraciones DENTRO de cada párrafo
    - ${config.focus}
    - Cada oración debe tener sentido completo
+   - NO escribas todo en un solo bloque, SEPARA por párrafos
+   
+   Ejemplo de formato correcto:
+   "contenido": "Primer párrafo con introducción al tema. Explica el contexto general.\\n\\nSegundo párrafo desarrollando los detalles. Incluye datos específicos y ejemplos concretos.\\n\\nTercer párrafo con conclusiones o implicaciones finales."
 
 6. **ESTILO DE REDACCIÓN:**
    - Tono: ${style.tone}
@@ -497,13 +511,20 @@ const parseSlides = (rawContent) => {
       const bullets = toBulletArray(slide.bullets || slide.puntos || slide.items || slide.lines);
       const rawContent = slide.contenido || slide.content || slide.descripcion || slide.resumen || '';
       
-      // Limpiar el contenido de caracteres problemáticos
+      // Limpiar el contenido preservando saltos de línea para párrafos
       const cleanContent = typeof rawContent === 'string' 
         ? rawContent
             .replace(/[""]/g, '"')
             .replace(/['']/g, "'")
             .replace(/…/g, '...')
-            .replace(/\s+/g, ' ')
+            // Preservar dobles saltos de línea (\\n\\n) para separar párrafos
+            .replace(/\\n\\n/g, '\n\n')
+            .replace(/\\n/g, ' ')  // Convertir \n simples en espacios
+            // Normalizar espacios DENTRO de párrafos (no entre ellos)
+            .split('\n\n')
+            .map(para => para.replace(/\s+/g, ' ').trim())
+            .filter(Boolean)
+            .join('\n\n')
             .replace(/\s+([.,;:!?])/g, '$1')
             .replace(/([.,;:!?])([^\s])/g, '$1 $2')
             .trim()
