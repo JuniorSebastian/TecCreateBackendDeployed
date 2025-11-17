@@ -216,24 +216,24 @@ const buildPrompt = (presentacion) => {
   const detailConfig = {
     Brief: {
       bulletCount: 3,
-      bulletLength: 'MÁXIMO 12 palabras',
-      contentLength: '2 párrafos BREVES (máx 80 palabras total)',
-      paragraphCount: 2,
-      focus: 'información esencial, directa, sin detalles superfluos',
+      bulletLength: 'MÁXIMO 15 palabras',
+      contentLength: '2-3 párrafos (máx 120 palabras total)',
+      paragraphCount: 3,
+      focus: 'información esencial y directa con contexto necesario',
     },
     Medium: {
       bulletCount: 4,
-      bulletLength: 'MÁXIMO 15 palabras',
-      contentLength: '2-3 párrafos CONCISOS (máx 120 palabras total)',
+      bulletLength: 'MÁXIMO 18 palabras',
+      contentLength: '3 párrafos bien desarrollados (máx 180 palabras total)',
       paragraphCount: 3,
-      focus: 'balance entre detalle y claridad con ejemplos concretos',
+      focus: 'balance entre detalle y claridad, con ejemplos concretos y contexto relevante',
     },
     Detailed: {
       bulletCount: 5,
-      bulletLength: 'MÁXIMO 18 palabras',
-      contentLength: '3 párrafos (máx 150 palabras total)',
-      paragraphCount: 3,
-      focus: 'análisis con datos, estadísticas y ejemplos específicos',
+      bulletLength: 'MÁXIMO 20 palabras',
+      contentLength: '3-4 párrafos completos (máx 225 palabras total)',
+      paragraphCount: 4,
+      focus: 'análisis profundo con datos, estadísticas, ejemplos específicos y conclusiones',
     },
   };
 
@@ -295,14 +295,21 @@ const buildPrompt = (presentacion) => {
    ✅ REQUERIDO: Oraciones CONCISAS, únicas, con datos específicos
    Ejemplo: ["Machu Picchu fue construida en el siglo XV.","Se encuentra a 2430 msnm.","Recibe 1.5M visitantes/año."]
 
-5. CONTENIDO: ${config.paragraphCount} párrafos CONCISOS separados por \\n\\n
-   - Cada párrafo: 2-3 oraciones BREVES
-   - Total: máximo 150 palabras para todo el contenido
+5. CONTENIDO: ${config.paragraphCount} párrafos bien estructurados separados por \\n\\n
+   - Cada párrafo: 3-4 oraciones completas y bien redactadas
+   - ${config.contentLength}
+   - Gramática perfecta, oraciones fluidas y coherentes
    - ${config.focus}
 
-6. ESTILO: ${style.tone} - ${style.structure}
+6. ESTILO Y GRAMÁTICA:
+   - Tono: ${style.tone}
+   - Estructura: ${style.structure}
+   - Oraciones completas y bien conectadas
+   - Puntuación correcta (comas, puntos, punto y coma)
+   - Transiciones naturales entre ideas
+   - Sin fragmentos ni oraciones cortadas
 
-Responde SOLO con JSON válido. Ortografía correcta: "Machu Picchu" (NO "Mache"), "Perú" (con tilde), "Cusco".`;
+Responde SOLO con JSON válido. Ortografía perfecta: "Machu Picchu" (NO "Mache"), "Perú" (con tilde), "Cusco".`;
 };
 
 const dedupeBullets = (bullets) => {
@@ -480,8 +487,8 @@ const parseSlides = (rawContent) => {
     // Validar contenido
     const contentStr = String(slide.contenido || slide.content || '');
     const contentWords = contentStr.trim().split(/\s+/).length;
-    if (contentWords > 180) {
-      errors.push(`Contenido muy largo (${contentWords} palabras, máx 180)`);
+    if (contentWords > 270) {
+      errors.push(`Contenido muy largo (${contentWords} palabras, máx 270)`);
     }
     
     return errors;
