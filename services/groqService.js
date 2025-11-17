@@ -616,6 +616,16 @@ const polishSlides = async (slides) => {
 
   for (let index = 0; index < slides.length; index += 1) {
     const slide = slides[index];
+    
+    // 📊 LOG: Slide ANTES de corrección
+    if (index === 0) {
+      console.log('📊 [ANTES CORRECCIÓN]:', JSON.stringify({
+        title: slide.title,
+        bullets: slide.bullets,
+        content: slide.content?.substring(0, 200)
+      }, null, 2));
+    }
+    
     const correctedTitle = ensureTitleForSlide(await corregirTexto(slide.title), index);
 
     const originalBullets = Array.isArray(slide.bullets) ? slide.bullets : [];
@@ -663,6 +673,15 @@ const polishSlides = async (slides) => {
     if (contenido) {
       slidePayload.contenido = contenido;
     }
+    
+    // 📊 LOG: Slide DESPUÉS de polish
+    if (index === 0) {
+      console.log('📊 [DESPUÉS POLISH]:', JSON.stringify({
+        title: slidePayload.title,
+        bullets: slidePayload.bullets,
+        contenido: slidePayload.contenido?.substring(0, 200)
+      }, null, 2));
+    }
 
     processed.push(slidePayload);
   }
@@ -689,9 +708,15 @@ async function generarSlidesConGroq(presentacion) {
       });
 
       const respuesta = chatCompletion?.choices?.[0]?.message?.content;
+      
+      // 📊 LOG: Respuesta RAW de Groq (primeros 500 caracteres)
+      console.log('📊 [GROQ RAW]:', respuesta?.substring(0, 500));
+      
       slides = parseSlides(respuesta);
       if (slides && slides.length) {
         console.log(`✅ Groq entregó JSON válido en el intento ${attempt}`);
+        // 📊 LOG: Contenido parseado (primera slide)
+        console.log('📊 [GROQ PARSED]:', JSON.stringify(slides[0], null, 2));
         break;
       }
       lastError = new Error('Groq devolvió un conjunto de slides vacío.');

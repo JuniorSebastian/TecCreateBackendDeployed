@@ -717,6 +717,15 @@ const normalizeSlides = (contenido) => {
       const contentParagraphs = prepareContentParagraphs(
         item.contenido || item.content || item.descripcionLarga || item.detalle || ''
       );
+      
+      // 📊 LOG: Slide normalizada (solo primera)
+      if (index === 0) {
+        console.log('📊 [NORMALIZADA]:', JSON.stringify({
+          title,
+          bullets,
+          contentParagraphs: contentParagraphs.map(p => p.substring(0, 100))
+        }, null, 2));
+      }
 
       return {
         title: title || `Sección ${index + 1}`,
@@ -730,6 +739,16 @@ const normalizeSlides = (contenido) => {
 async function crearPresentacionPptx(presentacion) {
   const pptx = new PptxGenJS();
   const slides = normalizeSlides(presentacion.contenido);
+  
+  // 📊 LOG: Contenido que llega al PPT service (primera slide)
+  if (presentacion.contenido && presentacion.contenido.length > 0) {
+    console.log('📊 [PPT RECIBE]:', JSON.stringify({
+      title: presentacion.contenido[0].title,
+      bullets: presentacion.contenido[0].bullets,
+      contenido: presentacion.contenido[0].contenido?.substring(0, 200)
+    }, null, 2));
+  }
+  
   const templateKey = resolveTemplateKey(presentacion?.plantilla);
   const theme = getTemplateTheme(templateKey);
   const fonts = getFontConfig(presentacion?.fuente);
